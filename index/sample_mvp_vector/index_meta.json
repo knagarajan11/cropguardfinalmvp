@@ -1,0 +1,6 @@
+{
+  "dimension": 2048,
+  "count": 6,
+  "metric": "cosine",
+  "storage_dtype": "float32"
+}

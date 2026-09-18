@@ -1,0 +1,253 @@
+image,ground_truth,prediction,confidence,truncated,correct,inference_time,response
+tomoto_early_blight_1.jpg,early blight,late blight,high,False,False,42.253159523010254,"We need to analyze the image. It shows a tomato leaf with a large brown decayed area, likely late blight (Phytophthora infestans). The leaf is attached to a tomato plant. The decay is extensive, with a large portion of the leaf rotted, brown, and possibly with white mold edges (though not clearly visible). The disease is late blight.
+
+Crop: Tomato
+Most likely disease: late_blight
+Visible symptoms: large brown/black decayed area on leaf, wilting, leaf collapse.
+Alternative causes: could be bacterial soft rot, but late blight is most likely given the shape and context.
+Immediate action: remove affected leaf, apply fungicide (e.g., copper-based or chlorothalonil), ensure good airflow, avoid overhead watering.
+Preventive measures: use resistant varieties, mulch, proper spacing, apply fungicide preventively.
+Another image needed? Probably not; diagnosis is clear.
+Confidence: high.
+
+We need to output in the specified format.
+
+Let's craft the answer.
+</think>
+Most likely disease: late_blight
+
+Confidence level: high
+
+Crop name: Tomato
+Most likely disease: late_blight
+Visible symptoms: large brown/black decayed area on leaf, leaf tissue rotting, leaf collapse
+Possible alternative causes: bacterial soft rot, early blight
+Recommended immediate action: remove the infected leaf, apply a fungicide (e.g., copper-based or chlorothalonil) and improve field sanitation
+Preventive measures: use resistant tomato varieties, ensure good air circulation, avoid overhead irrigation, mulch soil, and monitor for early symptoms
+Whether another image is needed: no
+Confidence level: high
+
+Agricultural recommendation: Immediately isolate and destroy the affected leaf, apply appropriate fungicide treatment, and implement cultural practices to reduce humidity and improve airflow around the plants."
+tomoto_early_blight_2.jpg,early blight,unknown,medium,False,False,124.84536147117615,"We need to analyze the image. The leaf shows a large decayed area at the tip, with brown, withered tissue, yellowing around the decay, and green healthy tissue. This looks like late blight? But late blight usually shows water-soaked lesions, white mold. This looks more like bacterial soft rot or maybe ""soft rot"" due to bacterial infection (e.g., Pectobacterium). However the pattern of decay at tip with yellowing could be ""bacterial soft rot"" or ""soft rot"" (e.g., Erwinia). Also could be ""sclerotial rot"" from fungal. The leaf is from tomato plant (visible tomatoes). The decay is at leaf tip, not whole leaf. Could be ""leaf spot"" but not typical.
+
+The image shows a leaf with a large brown necrotic area at the tip, with yellowing around it, and the rest of leaf is healthy. The background includes tomatoes (red, yellow, green). The leaf is attached to a stem with healthy leaves.
+
+The disease likely is ""bacterial soft rot"" (e.g., Erwinia carotovora) causing soft, water-soaked lesions that become brown and decay at the tip. But the leaf is not fully soft; it's dried and brown.
+
+Alternatively could be ""late blight"" (Phytophthora infestans) which often starts as water-soaked lesions, then brown/black, with white mold. Not seen here.
+
+Could be ""leaf mold"" or ""early blight""? Early blight shows target-like lesions, not tip decay.
+
+The decayed area looks like it has been physically damaged or rotted. The yellowing suggests the plant's response.
+
+Given the context of tomato leaf with a decayed tip, the most likely disease is ""bacterial soft rot"" or ""soft rot"" caused by soft rot bacteria. However the presence of a dry, brown, withered area could also be ""leaf scorch"" due to environmental stress (e.g., high temperature, low humidity). But the yellowing suggests disease.
+
+Another possibility: ""bottom rot"" or ""postbloom fruit drop""? Not relevant.
+
+The leaf is a typical tomato leaf. The decay is at the tip, which could be due to ""tip blight"" or ""tip rot"". In tomatoes, ""tip burn"" is a physiological disorder causing necrosis at leaf tip, often due to calcium deficiency or water stress. But the yellowing and brown area could be ""tip burn"" which is non-disease but a physiological disorder.
+
+But the question expects a disease diagnosis. The most likely disease given the visual cues: a large brown necrotic area at the tip with yellow halo, on a tomato leaf, likely ""bacterial soft rot"" or ""soft rot"". However typical soft rot appears as water-soaked lesions that become brown and mushy, often starting at the tip or leaf margin. The image shows a dry, brown area, not necessarily water-soaked.
+
+Another disease: ""late blight"" often starts at leaf edges and spreads. The image shows only a tip, not widespread.
+
+Could be ""sunscald"" but that's on fruit.
+
+Maybe it's ""bacterial canker""? That causes cracks and cankers on stems, not leaf tip.
+
+Let's consider ""bacterial spot"" - small spots, not large.
+
+""Fusarium wilt"" causes yellowing and wilting, but not a brown tip.
+
+""Verticillium wilt"" similar.
+
+The leaf shows a large brown area that is dried and withered, with yellow margin. This is typical of ""bacterial soft rot"" (Erwinia) which leads to soft, water-soaked tissue that later dries and becomes brown. The yellow margin is typical of the plant's response.
+
+Thus likely disease: ""bacterial soft rot"" (also known as ""soft rot"").
+
+Alternatively ""pseudomonas leaf blight"" but that's more water-soaked.
+
+Given the limited info, the safest diagnosis is ""soft rot"" (bacterial). But the question expects a disease name. Could also be ""leaf spot"" but not.
+
+Maybe the disease is ""late blight"" which is common in tomatoes. Late blight lesions are water-soaked, then become brown and white mold. The image does not show white mold. So maybe not.
+
+Could be ""early blight"" which shows target lesions, not tip.
+
+The leaf is clearly damaged at the tip, with a brown necrotic area and yellowing. This could be ""tip burn"" which is a physiological disorder, not a disease. But the question expects a disease.
+
+Maybe the disease is ""bacterial spot"" which can cause leaf spots that enlarge and become brown.
+
+But the image shows a large area of decay, not a small spot.
+
+Let's examine the image more: The leaf is large, the decayed area is at the tip, looks like the leaf tissue has been killed and dried, with a brown, papery texture. The yellowing is around the necrotic area. The rest of leaf is healthy. The leaf is attached to a healthy stem.
+
+In the background there are tomatoes: red, yellow, green. So the plant is healthy aside from this leaf.
+
+Thus the disease is likely a localized necrosis at the leaf tip, possibly due to ""bacterial soft rot"" or ""soft rot"".
+
+The recommended immediate action: remove the affected leaf to prevent spread, improve airflow, avoid overhead watering.
+
+Preventive measures: ensure good sanitation, avoid wounding, use disease-free seeds, rotate crops.
+
+Thus I will answer:
+
+Crop: Tomato
+Most likely disease: bacterial_soft_rot
+Visible symptoms: brown necrotic tip with yellow halo, leaf otherwise healthy
+Possible alternative causes: physical damage, environmental stress
+Recommended immediate action: remove the affected leaf and monitor for spread
+Preventive measures: maintain proper sanitation, avoid water splash, ensure good airflow
+Whether another image is needed: no
+Confidence level: medium
+
+But the format requires disease name exactly: ""bacterial_soft_rot"" maybe. Or ""soft_rot"". Let's choose ""bacterial_soft_rot"". Confidence: medium.
+
+Check if there is a known disease ""bacterial soft rot"" in tomatoes. Yes, Erwinia carotovora causes soft rot on fruit and sometimes leaf. The leaf can become water-soaked and then brown.
+
+Alternatively ""pseudomonas syringae"" can cause leaf spot and tip blight. But the symptom is more like leaf spot.
+
+Maybe the disease is ""bacterial leaf spot"" but that's small spots.
+
+The image shows a large decayed area, which is more consistent with ""soft rot"".
+
+Thus I will output:
+
+Most likely disease: bacterial_soft_rot
+
+Confidence level: medium
+
+Now produce concise agricultural recommendation.
+
+Let's craft final answer.
+</think>
+Most likely disease: bacterial_soft_rot
+
+Confidence level: medium
+
+Crop: Tomato
+Recommended immediate action: Remove the affected leaf and monitor the plant for further signs of decay; ensure good airflow and avoid water splash.
+Preventive measures: practice crop rotation, use disease‑free planting material, maintain proper sanitation, and avoid excessive moisture.
+Need another image: No"
+tomoto_healthy_image_1.jpg,healthy,healthy,high,False,True,23.838006496429443,"So, let's look at the image. The crop is tomatoes. There are green and red cherry tomatoes. No obvious disease symptoms here. The plant looks healthy. So the most likely disease is healthy (no disease), but wait, the task is to diagnose the most likely disease. Since there's no disease visible, maybe the disease is ""healthy"" or no disease. Wait, the options—maybe the disease is ""healthy"" as in no disease. Let's check.
+
+Crop: Tomato
+Most likely disease: healthy (since no disease signs)
+Visible symptoms: healthy plant, fruits in various stages
+Possible alternative causes: none, since it's healthy
+Recommended immediate action: maintain care
+Preventive measures: continue monitoring
+Another image not needed
+Confidence: high
+
+Wait, but the problem says ""diagnose the most likely disease"". If there's no disease, then the disease is healthy. Let's confirm. The image shows healthy tomato plants with fruits. So the disease is healthy.
+</think>
+Most likely disease: healthy
+Confidence level: high
+Crop name: tomato
+Visible symptoms: healthy plant with green and red cherry tomatoes
+Possible alternative causes: healthy
+Recommended immediate action: maintain proper care
+Preventive measures: continue monitoring for any signs of disease
+Whether another image is needed: no"
+tomoto_healthy_image_2.jpg,healthy,healthy,high,False,True,23.78695797920227,"So, let's look at the image. The crop is tomatoes. The tomatoes are healthy—no visible diseases. They have water droplets, which is normal. So the most likely disease is healthy (no disease). Wait, but the task is to diagnose the most likely disease. Since there's no disease, the disease is healthy. Let's check.
+
+Crop: Tomato
+Most likely disease: healthy
+Visible symptoms: healthy tomatoes with water droplets
+Possible alternative causes: none (since healthy)
+Recommended immediate action: healthy
+Preventive measures: maintain healthy conditions
+Whether another image is needed: no
+Confidence level: high
+
+Wait, but the problem says ""diagnose the most likely disease"". If there's no disease, then the disease is healthy. Let's confirm. The image shows healthy tomatoes. So the disease is healthy.
+</think>
+Most likely disease: healthy
+Confidence level: high
+Crop name: tomato
+Recommended immediate action: healthy
+Preventive measures: maintain healthy conditions
+Whether another image is needed: no
+Visible symptoms: healthy tomatoes with water droplets
+Possible alternative causes: none
+
+The tomatoes are healthy with no signs of disease. The water droplets are likely from irrigation or rain, which is normal and not a disease indicator.
+
+Agricultural recommendation: maintain current healthy conditions and continue proper irrigation practices."
+tomoto_late_blight_1.jpg,late blight,late blight,high,False,True,61.15258741378784,"We need to analyze the image. The image shows a tomato plant with a leaf that has late blight symptoms: dark brown necrotic lesions with yellow halo, white fuzzy mold (sporangia) on the leaf and stem. The text overlay says ""Late Blight (Phyrophetra infestans)"" (note misspelling of Phytophthora). So the disease is Late Blight. Crop is tomato. Provide diagnosis and details.
+
+We need to output in the specified format:
+
+Most likely disease: Late Blight
+
+Confidence level: high (since clear). Provide concise agricultural recommendation.
+
+Also need to list the other items? The prompt says ""Provide:"" then list items. But also says ""Clearly state the diagnosis using exactly this format:"" and ""Also clearly state your confidence using exactly this format:"" So we need to output the diagnosis and confidence, and also the list of items? The instruction: ""Analyze the provided crop leaf image. Identify the crop and diagnose the most likely disease. Provide: 1. Crop name 2. Most likely disease 3. Visible symptoms 4. Possible alternative causes 5. Recommended immediate action 6. Preventive measures 7. Whether another image is needed 8. Confidence level"". Then ""IMPORTANT: Clearly state the diagnosis using exactly this format: Most likely disease: <disease name> Also clearly state your confidence using exactly this format: Confidence level: <low/medium/high or a percentage>"".
+
+Thus we need to output both the list and the diagnosis and confidence. Probably we should output the diagnosis and confidence as separate lines, then the list. Or maybe combine? The instruction says ""Provide:"" then list items. So we should give the list items. Then also the diagnosis and confidence lines.
+
+Thus output something like:
+
+Crop name: Tomato
+Most likely disease: Late Blight
+Visible symptoms: ... etc.
+
+But also need the diagnosis line and confidence line.
+
+Let's produce:
+
+Most likely disease: Late Blight
+Confidence level: high
+
+Crop name: Tomato
+Most likely disease: Late Blight
+Visible symptoms: dark brown necrotic lesions with yellow halo, white fuzzy mold on leaf and stem, fruit rot
+Possible alternative causes: early blight, bacterial spot
+Recommended immediate action: remove infected leaf and apply fungicide
+Preventive measures: use resistant varieties, apply copper-based fungicide, improve airflow
+Whether another image is needed: no
+Confidence level: high
+
+But need to ensure the diagnosis line exactly matches format: ""Most likely disease: Late Blight"". And confidence line exactly: ""Confidence level: high"". Also maybe we need to include the disease name with the scientific name? The format says disease name only. So ""Late Blight"". Good.
+
+Now ensure we include all required items. Let's craft concise recommendation: ""Remove infected leaf, apply fungicide, monitor for spread"". That's concise.
+
+Now produce final answer.
+</think>
+Most likely disease: Late Blight
+Confidence level: high
+
+Crop name: Tomato
+Most likely disease: Late Blight
+Visible symptoms: dark brown necrotic lesions with yellow halo, white fuzzy mold on leaf and stem, fruit rot
+Possible alternative causes: early blight, bacterial spot
+Recommended immediate action: remove infected leaf and apply fungicide
+Preventive measures: use resistant varieties, apply copper-based fungicide, improve airflow
+Whether another image is needed: no
+Confidence level: high"
+tomoto_late_blight_2.jpg,late blight,late blight,high,False,True,34.18064498901367,"We need to analyze the image. It shows tomato plant with green tomatoes, many dried, brown, decayed leaves. Looks like late blight? Or early blight? The leaves are with lesions, brown and decayed, some have yellowing. The stems are green but also have some decay. The overall condition suggests late blight (Phytophthora infestans) which causes rapid decay of leaves and fruit. However the fruit are still green and not obviously rotted. The leaves are with lesions and decayed, typical of late blight. Also could be early blight (Alternaria) but that usually has target-like spots, not full decay. The image shows many dead leaves, some with lesions, and the plant looks like it's at the end of season. Could be ""late blight"" which is the most severe. The presence of green fruit suggests not total loss.
+
+Diagnosis: late blight.
+
+Provide the required fields.
+
+Confidence: high (since clear signs). Provide recommendation: remove infected plant material, improve airflow, apply fungicide if possible.
+
+Let's craft answer.
+</think>
+Most likely disease: late_blight
+
+Confidence level: high
+
+Crop name: Tomato
+
+Visible symptoms: decaying brown and blackened leaves, lesions on foliage, fruit still green and unaffected, overall plant wilted and dying
+
+Possible alternative causes: early_blight, septoria_leaf_spot, bacterial_spot
+
+Recommended immediate action: remove and destroy infected plant debris, prune healthy parts, apply copper-based fungicide and improve field sanitation
+
+Preventive measures: rotate crops, use resistant varieties, ensure proper spacing for airflow, mulch to reduce soil splash, monitor for early signs of disease
+
+Whether another image is needed: no
+
+Agricultural recommendation: The crop is severely infected; consider harvesting remaining healthy fruit and destroying the plant to prevent spread, then apply appropriate fungicide and clean the area before replanting."

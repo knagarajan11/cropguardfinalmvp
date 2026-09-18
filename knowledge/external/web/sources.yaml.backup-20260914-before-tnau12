@@ -1,0 +1,40 @@
+external_knowledge:
+  enabled: true
+
+  embedding:
+    model: nvidia/llama-nemotron-embed-vl-1b-v2
+    chunk_size: 1000
+    chunk_overlap: 150
+    index_type: FAISS-IndexFlatIP
+
+  pdf:
+    enabled: true
+    path: /workspace/knowledge/external/pdf
+
+  web:
+    enabled: true
+    sources:
+
+      - source_id: tnau_tomato_diseases_001
+        name: TNAU Agritech Portal
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_phdiseases_4.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: cornell_northern_corn_leaf_blight_001
+        name: Cornell University - Northern Corn Leaf Blight
+        url: https://www.vegetables.cornell.edu/pest-management/disease-factsheets/northern-corn-leaf-blight-of-sweet-corn/
+        source_type: web
+        authority: university_extension
+        verify_ssl: true
+        enabled: true
+
+      - source_id: cornell_tomato_diseases_001
+        name: Cornell University - Managing Tomato Diseases Successfully
+        url: https://www.vegetables.cornell.edu/pest-management/disease-factsheets/managing-tomato-diseases-successfully/
+        source_type: web
+        authority: university_extension
+        verify_ssl: true
+        enabled: true

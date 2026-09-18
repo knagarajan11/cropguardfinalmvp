@@ -1,0 +1,49 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+======================================================================
+TESTING REMAPPED CROPGUARD LORA
+======================================================================
+
+===== LOAD BASE =====
+[ERROR] `cache_position` is part of NemotronHForCausalLM.forward's signature, but not documented. Make sure to add it to the docstring of the function in /workspace/hf_cache/modules/transformers_modules/e5e9932441de940c9a62185c870ea5bcd4cd24e2/d6489b65e6888d3f/modeling_nemotron_h.py.
+Loading weights:   0%|          | 0/7345 [00:00<?, ?it/s]Loading weights:   9%|▉         | 697/7345 [00:00<00:00, 6965.14it/s]Loading weights:  19%|█▉        | 1394/7345 [00:00<00:00, 6731.17it/s]Loading weights:  28%|██▊       | 2068/7345 [00:00<00:00, 6687.57it/s]Loading weights:  37%|███▋      | 2738/7345 [00:00<00:00, 6611.37it/s]Loading weights:  46%|████▋     | 3400/7345 [00:00<00:00, 6580.74it/s]Loading weights:  55%|█████▌    | 4071/7345 [00:00<00:00, 6618.10it/s]Loading weights:  64%|██████▍   | 4733/7345 [00:00<00:00, 6570.89it/s]Loading weights:  74%|███████▎  | 5403/7345 [00:00<00:00, 6608.48it/s]Loading weights:  83%|████████▎ | 6066/7345 [00:00<00:00, 6600.88it/s]Loading weights:  92%|█████████▏| 6769/7345 [00:01<00:00, 6732.23it/s]Loading weights: 100%|██████████| 7345/7345 [00:01<00:00, 6726.66it/s]
+[transformers] [1mNemotronH_Nano_Omni_Reasoning_V3 LOAD REPORT[0m from: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+Key                                                       | Status     | 
+----------------------------------------------------------+------------+-
+sound_encoder.encoder.feature_extractor.featurizer.window | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_mean      | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_std       | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.fb     | UNEXPECTED | 
+vision_model.radio_model.summary_idxs                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+BASE MODEL: OK
+
+===== LOAD REMAPPED LORA =====
+LORA MODEL: OK
+
+===== ADAPTER STATUS =====
+Active adapters: ['default']
+
+===== CHECK LORA WEIGHTS =====
+base_model.model.language_model.backbone.layers.0.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.035714149475098 | B norm: 2.805946111679077
+base_model.model.language_model.backbone.layers.0.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 3.9960899353027344 | B norm: 0.0
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.up_proj | A: (8, 2688) | B: (3712, 8) | A norm: 4.097665786743164 | B norm: 1.7326334714889526
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.down_proj | A: (8, 3712) | B: (2688, 8) | A norm: 4.036736965179443 | B norm: 1.485111117362976
+base_model.model.language_model.backbone.layers.2.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.054962635040283 | B norm: 2.828141927719116
+base_model.model.language_model.backbone.layers.2.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 3.998915195465088 | B norm: 0.0
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.up_proj | A: (8, 2688) | B: (3712, 8) | A norm: 4.045630931854248 | B norm: 1.615177035331726
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.down_proj | A: (8, 3712) | B: (2688, 8) | A norm: 4.032749652862549 | B norm: 1.4550423622131348
+base_model.model.language_model.backbone.layers.4.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.0093207359313965 | B norm: 2.818902015686035
+base_model.model.language_model.backbone.layers.4.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 4.014519214630127 | B norm: 0.0
+
+===== RESULT =====
+LoRA modules: 116
+Non-zero A/B pairs: 93
+Zero A/B pairs: 23
+Traceback (most recent call last):
+  File "/workspace/test_remapped_lora.py", line 85, in <module>
+    raise RuntimeError(
+RuntimeError: Expected 116 non-zero A/B pairs, found 93

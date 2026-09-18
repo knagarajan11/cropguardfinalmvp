@@ -1,0 +1,419 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any, Iterable
+
+
+VALID_PREFERENCES = {"Organic", "IPM", "General"}
+VALID_EVIDENCE_TYPES = {"diagnosis", "treatment"}
+
+# IMPORTANT:
+# NVIDIA reranker scores are relevance signals, NOT calibrated
+# truth or hallucination probabilities.
+DEFAULT_MIN_RERANKER_SCORE: float | None = None
+
+
+@dataclass
+class EvidenceFilterResult:
+    status: str
+    accepted: list[Any] = field(default_factory=list)
+    rejected: list[Any] = field(default_factory=list)
+    reasons: list[str] = field(default_factory=list)
+
+    @property
+    def sufficient(self) -> bool:
+        return self.status == "SUFFICIENT"
+
+    @property
+    def abstain(self) -> bool:
+        return self.status != "SUFFICIENT"
+
+
+class EvidenceFilter:
+    """
+    Deterministic safety/policy filter applied AFTER retrieval + reranking.
+
+    Important:
+      reranker_score != truth probability
+      reranker_score != hallucination probability
+
+    Policy eligibility and evidence relevance are evaluated separately.
+
+    For a specific recommendation preference:
+      Organic -> ONLY Organic evidence may satisfy the request
+      IPM     -> ONLY IPM evidence may satisfy the request
+      General -> General evidence is preferred/accepted
+
+    General/IPM evidence must never be silently substituted for
+    a request explicitly asking for Organic evidence.
+    """
+
+    def __init__(
+        self,
+        *,
+        min_reranker_score: float | None = DEFAULT_MIN_RERANKER_SCORE,
+        require_relevant_evidence: bool = True,
+    ) -> None:
+        self.min_reranker_score = min_reranker_score
+        self.require_relevant_evidence = require_relevant_evidence
+
+    @staticmethod
+    def _metadata(item: Any) -> dict[str, Any]:
+        metadata = getattr(item, "metadata", None)
+
+        if metadata is not None:
+            return dict(metadata)
+
+        if isinstance(item, dict):
+            metadata = item.get("metadata", {})
+            return dict(metadata)
+
+        return {}
+
+    @staticmethod
+    def _score(item: Any) -> float | None:
+        value = getattr(item, "reranker_score", None)
+
+        if value is None and isinstance(item, dict):
+            value = item.get("reranker_score")
+
+        if value is None:
+            return None
+
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _field(item: Any, name: str) -> Any:
+        metadata = EvidenceFilter._metadata(item)
+
+        if name in metadata:
+            return metadata[name]
+
+        if isinstance(item, dict):
+            return item.get(name)
+
+        return getattr(item, name, None)
+
+    @staticmethod
+    def _normalise(value: Any) -> str:
+        if value is None:
+            return ""
+
+        value = str(value).strip().lower()
+
+        # Application-level disease aliases.
+        # Original KB metadata is preserved unchanged.
+        disease_aliases = {
+            "northern corn leaf blight": "northern_leaf_blight",
+            "northern leaf blight": "northern_leaf_blight",
+            "nclb": "northern_leaf_blight",
+            "bacterial leaf blight": "bacterial_leaf_blight",
+        }
+
+        compact = " ".join(value.split())
+
+        if compact in disease_aliases:
+            return disease_aliases[compact]
+
+        return compact.replace(" ", "_")
+
+    def _matches_context(
+        self,
+        item: Any,
+        *,
+        crop: str | None,
+        disease: str | None,
+        evidence_type: str | None,
+    ) -> tuple[bool, str | None]:
+
+        if crop is not None:
+            actual_crop = self._normalise(
+                self._field(item, "crop")
+            )
+
+            if actual_crop != self._normalise(crop):
+                return (
+                    False,
+                    f"Context mismatch: crop={actual_crop!r}, "
+                    f"expected={crop!r}.",
+                )
+
+        if disease is not None:
+            actual_disease = self._normalise(
+                self._field(item, "disease")
+            )
+
+            if actual_disease != self._normalise(disease):
+                return (
+                    False,
+                    f"Context mismatch: disease={actual_disease!r}, "
+                    f"expected={disease!r}.",
+                )
+
+        if evidence_type is not None:
+            actual_type = self._normalise(
+                self._field(item, "evidence_type")
+            )
+
+            if actual_type != self._normalise(evidence_type):
+                return (
+                    False,
+                    f"Evidence type mismatch: "
+                    f"{actual_type!r}, expected={evidence_type!r}.",
+                )
+
+        return True, None
+
+    def _policy_check(
+        self,
+        item: Any,
+        recommendation_preference: str,
+    ) -> tuple[bool, str | None]:
+
+        actual_preference = self._field(
+            item,
+            "recommendation_preference",
+        )
+
+        # ---------------------------------------------------------
+        # CRITICAL POLICY RULE
+        #
+        # A requested preference must NOT be satisfied by another
+        # preference.
+        # ---------------------------------------------------------
+
+        if recommendation_preference in {"Organic", "IPM"}:
+            if self._normalise(actual_preference) != self._normalise(
+                recommendation_preference
+            ):
+                return (
+                    False,
+                    "Policy mismatch: evidence preference "
+                    f"{actual_preference!r} cannot satisfy requested "
+                    f"{recommendation_preference!r}.",
+                )
+
+        # Organic additionally requires organic eligibility.
+        if recommendation_preference == "Organic":
+            organic_eligible = self._field(
+                item,
+                "organic_eligible",
+            )
+
+            if organic_eligible is not True:
+                return (
+                    False,
+                    "Policy violation: evidence is not "
+                    "Organic eligible.",
+                )
+
+        # IPM additionally requires IPM eligibility.
+        if recommendation_preference == "IPM":
+            ipm_eligible = self._field(
+                item,
+                "ipm_eligible",
+            )
+
+            if ipm_eligible is not True:
+                return (
+                    False,
+                    "Policy violation: evidence is not "
+                    "IPM eligible.",
+                )
+
+        return True, None
+
+    def _relevance_check(
+        self,
+        item: Any,
+        threshold: float | None = None,
+    ) -> tuple[bool, str | None]:
+
+        if not self.require_relevant_evidence:
+            return True, None
+
+        score = self._score(item)
+
+        if score is None:
+            return (
+                False,
+                "Missing or invalid reranker relevance score.",
+            )
+
+        if threshold is not None:
+            if score < threshold:
+                return (
+                    False,
+                    f"Weak relevance: score {score:.6f} "
+                    f"is below configured threshold "
+                    f"{threshold:.6f}.",
+                )
+
+        return True, None
+
+    def _detect_conflicts(
+        self,
+        accepted: Iterable[Any],
+    ) -> list[Any]:
+
+        conflicts = []
+
+        for item in accepted:
+            metadata = self._metadata(item)
+
+            if metadata.get("conflict") is True:
+                conflicts.append(item)
+
+        return conflicts
+
+    def filter(
+        self,
+        evidence: Iterable[Any],
+        *,
+        crop: str | None = None,
+        disease: str | None = None,
+        evidence_type: str | None = None,
+        recommendation_preference: str = "General",
+        min_relevance: float | None = None,
+    ) -> EvidenceFilterResult:
+
+        if recommendation_preference not in VALID_PREFERENCES:
+            raise ValueError(
+                f"Unsupported recommendation_preference="
+                f"{recommendation_preference!r}. "
+                f"Expected one of {sorted(VALID_PREFERENCES)}."
+            )
+
+        if evidence_type is not None:
+            if evidence_type not in VALID_EVIDENCE_TYPES:
+                raise ValueError(
+                    f"Unsupported evidence_type={evidence_type!r}. "
+                    f"Expected one of {sorted(VALID_EVIDENCE_TYPES)}."
+                )
+
+        threshold = (
+            min_relevance
+            if min_relevance is not None
+            else self.min_reranker_score
+        )
+
+        accepted: list[Any] = []
+        rejected: list[Any] = []
+        reasons: list[str] = []
+
+        for item in evidence:
+
+            # -----------------------------------------------------
+            # 1. Context safety
+            # -----------------------------------------------------
+            matches, reason = self._matches_context(
+                item,
+                crop=crop,
+                disease=disease,
+                evidence_type=evidence_type,
+            )
+
+            if not matches:
+                rejected.append(item)
+                if reason:
+                    reasons.append(reason)
+                continue
+
+            # -----------------------------------------------------
+            # 2. Recommendation-policy safety
+            # -----------------------------------------------------
+            policy_ok, reason = self._policy_check(
+                item,
+                recommendation_preference,
+            )
+
+            if not policy_ok:
+                rejected.append(item)
+                if reason:
+                    reasons.append(reason)
+                continue
+
+            # -----------------------------------------------------
+            # 3. Relevance safety
+            # -----------------------------------------------------
+            if threshold is not None:
+                score = self._score(item)
+
+                if score is None:
+                    rejected.append(item)
+                    reasons.append(
+                        "Missing or invalid reranker relevance score."
+                    )
+                    continue
+
+                if score < threshold:
+                    rejected.append(item)
+                    reasons.append(
+                        f"Weak relevance: score {score:.6f} "
+                        f"is below configured threshold "
+                        f"{threshold:.6f}."
+                    )
+                    continue
+            else:
+                relevance_ok, reason = self._relevance_check(item)
+
+                if not relevance_ok:
+                    rejected.append(item)
+                    if reason:
+                        reasons.append(reason)
+                    continue
+
+            # -----------------------------------------------------
+            # 4. Development/sample knowledge marker
+            # -----------------------------------------------------
+            metadata = self._metadata(item)
+
+            if metadata.get("source") == "SampleMVP":
+                # Local metadata annotation only.
+                # Does not mutate the underlying retrieval object.
+                metadata["authoritative"] = False
+                metadata["development_only"] = True
+
+            accepted.append(item)
+
+        # ---------------------------------------------------------
+        # 5. Safe abstention
+        # ---------------------------------------------------------
+        if not accepted:
+            return EvidenceFilterResult(
+                status="INSUFFICIENT",
+                accepted=[],
+                rejected=rejected,
+                reasons=reasons
+                + [
+                    "No evidence satisfied context, "
+                    "recommendation policy, and relevance requirements."
+                ],
+            )
+
+        # ---------------------------------------------------------
+        # 6. Explicit conflict handling
+        # ---------------------------------------------------------
+        conflicts = self._detect_conflicts(accepted)
+
+        if conflicts:
+            return EvidenceFilterResult(
+                status="CONFLICTING",
+                accepted=accepted,
+                rejected=rejected,
+                reasons=reasons
+                + [
+                    "Conflicting evidence detected; "
+                    "generation must abstain until conflict is resolved."
+                ],
+            )
+
+        return EvidenceFilterResult(
+            status="SUFFICIENT",
+            accepted=accepted,
+            rejected=rejected,
+            reasons=reasons,
+        )

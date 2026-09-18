@@ -1,0 +1,66 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+===== LOAD BASE =====
+[ERROR] `cache_position` is part of NemotronHForCausalLM.forward's signature, but not documented. Make sure to add it to the docstring of the function in /workspace/hf_cache/modules/transformers_modules/e5e9932441de940c9a62185c870ea5bcd4cd24e2/d6489b65e6888d3f/modeling_nemotron_h.py.
+Loading weights:   0%|          | 0/7345 [00:00<?, ?it/s]Loading weights:   8%|▊         | 600/7345 [00:00<00:01, 5989.74it/s]Loading weights:  17%|█▋        | 1231/7345 [00:00<00:00, 6159.15it/s]Loading weights:  25%|██▌       | 1847/7345 [00:00<00:00, 6027.61it/s]Loading weights:  34%|███▍      | 2491/7345 [00:00<00:00, 6177.44it/s]Loading weights:  43%|████▎     | 3179/7345 [00:00<00:00, 6426.61it/s]Loading weights:  54%|█████▎    | 3939/7345 [00:00<00:00, 6821.09it/s]Loading weights:  64%|██████▍   | 4720/7345 [00:00<00:00, 7139.70it/s]Loading weights:  74%|███████▍  | 5435/7345 [00:00<00:00, 6988.01it/s]Loading weights:  84%|████████▎ | 6135/7345 [00:00<00:00, 6966.97it/s]Loading weights:  93%|█████████▎| 6833/7345 [00:01<00:00, 6959.88it/s]Loading weights: 100%|██████████| 7345/7345 [00:01<00:00, 6770.88it/s]
+[transformers] [1mNemotronH_Nano_Omni_Reasoning_V3 LOAD REPORT[0m from: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+Key                                                       | Status     | 
+----------------------------------------------------------+------------+-
+sound_encoder.encoder.feature_extractor.featurizer.window | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_mean      | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_std       | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.fb     | UNEXPECTED | 
+vision_model.radio_model.summary_idxs                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+BASE: OK
+
+===== LOAD LORA =====
+LORA: OK
+
+===== ADAPTER STATUS =====
+Active adapters: ['default']
+
+===== LORA MODULE COUNT =====
+LoRA modules found: 116
+
+===== FIRST 20 LORA MODULES =====
+base_model.model.language_model.backbone.layers.0.mixer.in_proj
+base_model.model.language_model.backbone.layers.0.mixer.out_proj
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.up_proj
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.down_proj
+base_model.model.language_model.backbone.layers.2.mixer.in_proj
+base_model.model.language_model.backbone.layers.2.mixer.out_proj
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.up_proj
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.down_proj
+base_model.model.language_model.backbone.layers.4.mixer.in_proj
+base_model.model.language_model.backbone.layers.4.mixer.out_proj
+base_model.model.language_model.backbone.layers.5.mixer.q_proj
+base_model.model.language_model.backbone.layers.5.mixer.k_proj
+base_model.model.language_model.backbone.layers.5.mixer.v_proj
+base_model.model.language_model.backbone.layers.5.mixer.o_proj
+base_model.model.language_model.backbone.layers.6.mixer.shared_experts.up_proj
+base_model.model.language_model.backbone.layers.6.mixer.shared_experts.down_proj
+base_model.model.language_model.backbone.layers.7.mixer.in_proj
+base_model.model.language_model.backbone.layers.7.mixer.out_proj
+base_model.model.language_model.backbone.layers.8.mixer.shared_experts.up_proj
+base_model.model.language_model.backbone.layers.8.mixer.shared_experts.down_proj
+
+===== WEIGHT CHECK =====
+base_model.model.language_model.backbone.layers.0.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.035714149475098 | B norm: 2.805946111679077
+base_model.model.language_model.backbone.layers.0.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 3.9960899353027344 | B norm: 0.0
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.up_proj | A: (8, 2688) | B: (3712, 8) | A norm: 4.097665786743164 | B norm: 1.7326334714889526
+base_model.model.language_model.backbone.layers.1.mixer.shared_experts.down_proj | A: (8, 3712) | B: (2688, 8) | A norm: 4.036736965179443 | B norm: 1.485111117362976
+base_model.model.language_model.backbone.layers.2.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.054962635040283 | B norm: 2.828141927719116
+base_model.model.language_model.backbone.layers.2.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 3.998915195465088 | B norm: 0.0
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.up_proj | A: (8, 2688) | B: (3712, 8) | A norm: 4.045630931854248 | B norm: 1.615177035331726
+base_model.model.language_model.backbone.layers.3.mixer.shared_experts.down_proj | A: (8, 3712) | B: (2688, 8) | A norm: 4.032749652862549 | B norm: 1.4550423622131348
+base_model.model.language_model.backbone.layers.4.mixer.in_proj | A: (8, 2688) | B: (10304, 8) | A norm: 4.0093207359313965 | B norm: 2.818902015686035
+base_model.model.language_model.backbone.layers.4.mixer.out_proj | A: (8, 4096) | B: (2688, 8) | A norm: 4.014519214630127 | B norm: 0.0
+
+===== FINAL =====
+Expected LoRA modules: 116
+Actual LoRA modules: 116
+RESULT: ALL 116 LORA MODULES PRESENT

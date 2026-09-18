@@ -1,0 +1,7 @@
+Python: 3.12.3 (main, Mar  3 2026, 12:15:18) [GCC 13.3.0]
+Executable: /opt/venv/bin/python
+Torch: 2.12.0a0+0291f960b6.nv26.04.48445190
+CUDA: 13.2
+CUDA available: True
+GPU count: 2
+NeMo AutoModel: /home/gsh-ndhmy/.local/lib/python3.12/site-packages/nemo_automodel/__init__.py

@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#092c22">
+  <meta name="description"
+        content="CropGuard AI — crop-image analysis and evidence-grounded agricultural guidance. An NVIDIA Open Hackathon project by MultiModel Mavericks.">
+  <title>CropGuard AI | From leaf to insight</title>
+
+  <style>
+    :root {
+      --bg: #f7f8f2;
+      --ink: #14392d;
+      --muted: #586b60;
+      --green: #126443;
+      --lime: #d3ef87;
+      --border: #dce4d7;
+      --white: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 90px;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+
+    a { color: inherit; }
+
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid #378850;
+      outline-offset: 5px;
+    }
+
+    .container {
+      width: min(1120px, 90%);
+      margin: auto;
+    }
+
+    .skip {
+      position: absolute;
+      left: 12px;
+      top: -100px;
+      background: white;
+      padding: 12px;
+      z-index: 10;
+    }
+
+    .skip:focus {
+      top: 10px;
+    }
+
+    /* =========================
+       HEADER
+       ========================= */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: rgba(247,248,242,.96);
+      border-bottom: 1px solid var(--border);
+    }
+
+    nav {
+      min-height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -.8px;
+    }
+
+    .brand svg {
+      width: 38px;
+      height: 38px;
+    }
+
+    .brand span {
+      color: var(--green);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 25px;
+    }
+
+    .nav-links a {
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* =========================
+       BUTTONS
+       ========================= */
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 13px 22px;
+      border-radius: 8px;
+      background: var(--ink);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid transparent;
+      transition: background .2s, transform .2s;
+    }
+
+    .button:hover {
+      background: var(--green);
+      transform: translateY(-2px);
+    }
+
+    .button.secondary {
+      background: transparent;
+      color: var(--ink);
+      border-color: var(--border);
+    }
+
+    .button.secondary:hover {
+      background: #eaf0e3;
+    }
+
+    /* =========================
+       HERO
+       ========================= */
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      align-items: center;
+      gap: 65px;
+      padding: 85px 0;
+    }
+
+    .eyebrow {
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 7px 12px;
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      margin-bottom: 24px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    h1 {
+      font-size: clamp(44px, 6vw, 76px);
+      line-height: 1.06;
+      letter-spacing: -3px;
+      margin: 0 0 24px;
+      font-weight: 750;
+    }
+
+    h1 em {
+      color: var(--green);
+      font-style: normal;
+    }
+
+    .lead {
+      font-size: 18px;
+      color: var(--muted);
+      max-width: 550px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* =========================
+       HERO VISUAL
+       ========================= */
+
+    .visual {
+      position: relative;
+      border-radius: 24px;
+      background: #e5eddb;
+      padding: 26px;
+      overflow: hidden;
+      border: 1px solid #d4dfc8;
+    }
+
+    .visual-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .leaf-art {
+      display: block;
+      width: 100%;
+      height: 300px;
+    }
+
+    .sample {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px #14392d0d;
+    }
+
+    .sample-title {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .sample h3 {
+      margin: 5px 0 12px;
+      font-size: 20px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      font-size: 11px;
+      background: #edf4e8;
+      padding: 5px 9px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    /* =========================
+       FEATURE STRIP
+       ========================= */
+
+    .strip {
+      border-block: 1px solid var(--border);
+    }
+
+    .strip-inner {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 21px 0;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    /* =========================
+       CONTENT SECTIONS
+       ========================= */
+
+    section.content {
+      padding: 80px 0;
+    }
+
+    .section-heading {
+      max-width: 690px;
+      margin-bottom: 34px;
+    }
+
+    h2 {
+      font-size: clamp(30px, 4vw, 43px);
+      line-height: 1.17;
+      letter-spacing: -1.3px;
+      margin: 12px 0 18px;
+    }
+
+    .section-heading p {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      padding: 28px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      color: var(--green);
+      background: #edf4e8;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .card h3 {
+      font-size: 20px;
+      margin: 20px 0 10px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 15px;
+      margin: 0;
+    }
+
+    /* =========================
+       DARK TECHNOLOGY SECTION
+       ========================= */
+
+    .dark {
+      background: #092c22;
+      color: #f1f6ec;
+    }
+
+    .dark .eyebrow {
+      color: var(--lime);
+    }
+
+    .dark .section-heading p {
+      color: #c0cfc2;
+    }
+
+    .dark .card {
+      background: #12372c;
+      border-color: #315043;
+    }
+
+    .dark .card p {
+      color: #c0cfc2;
+    }
+
+    .dark .card h3 {
+      margin-top: 0;
+    }
+
+    .tech-note {
+      color: #c0cfc2;
+      margin-top: 24px;
+      font-size: 13px;
+    }
+
+    /* =========================
+       RESPONSIBLE GUIDANCE
+       ========================= */
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 65px;
+    }
+
+    .principles {
+      border-top: 1px solid var(--border);
+    }
+
+    .principle {
+      padding: 19px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .principle h3 {
+      margin: 0 0 5px;
+      font-size: 17px;
+    }
+
+    .principle p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    /* =========================
+       TEAM SECTION
+       ========================= */
+
+    .cg-team {
+      margin: 24px 0 32px;
+      padding: 28px;
+      border: 1px solid #345345;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #102b22, #172019);
+      color: #f4f8ef;
+    }
+
+    .cg-team-label {
+      color: #c9ed8a;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .cg-team h2 {
+      color: #f4f8ef;
+      font-size: clamp(26px, 4vw, 38px);
+      margin: 8px 0;
+      padding: 0;
+    }
+
+    .cg-team-intro {
+      color: #d2dfd3;
+      margin: 0 0 22px;
+    }
+
+    .cg-members {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .cg-member {
+      padding: 22px 14px;
+      text-align: center;
+      border: 1px solid #405347;
+      border-radius: 14px;
+      background: #202e25;
+    }
+
+    .cg-initials {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 14px;
+      border-radius: 16px;
+      background: #c9ed8a;
+      color: #173822;
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .cg-member-name {
+      color: #ffffff;
+      font-size: 17px;
+      font-weight: 650;
+      line-height: 1.5;
+    }
+
+    .cg-member-role {
+      margin-top: 6px;
+      color: #c0cebf;
+      font-size: 12px;
+    }
+
+    .cg-mentor {
+      margin-top: 20px;
+      padding: 20px 22px;
+      border-left: 4px solid #c9ed8a;
+      border-radius: 8px;
+      background: #24382b;
+    }
+
+    .cg-mentor-name {
+      margin: 6px 0;
+      color: #ffffff;
+      font-size: 23px;
+      font-weight: 700;
+    }
+
+    .cg-mentor p {
+      color: #d2dfd3;
+      margin: 0;
+    }
+
+    .cg-team-footer {
+      margin: 20px 0 0;
+      text-align: center;
+      color: #c9ed8a;
+      font-size: 14px;
+    }
+
+    /* =========================
+       CTA
+       ========================= */
+
+    .cta {
+      background: var(--lime);
+      border-radius: 20px;
+      padding: 48px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 30px;
+    }
+
+    .cta h2 {
+      margin-top: 0;
+    }
+
+    .cta p {
+      margin-bottom: 0;
+      max-width: 620px;
+    }
+
+    .cta .button {
+      flex-shrink: 0;
+    }
+
+    /* =========================
+       FOOTER
+       ========================= */
+
+    footer {
+      padding: 36px 0;
+      margin-top: 65px;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      gap: 25px;
+    }
+
+    footer p {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .footer-note {
+      max-width: 450px;
+    }
+
+    /* =========================
+       RESPONSIVE
+       ========================= */
+
+    @media (max-width: 900px) {
+
+      .hero {
+        gap: 30px;
+        padding: 50px 0;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .split {
+        gap: 30px;
+      }
+
+      .nav-links {
+        gap: 15px;
+      }
+
+      .nav-links .optional {
+        display: none;
+      }
+
+      .cta {
+        padding: 32px;
+      }
+
+      .cg-members {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 650px) {
+
+      .hero,
+      .split {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        letter-spacing: -2px;
+      }
+
+      .hero {
+        gap: 35px;
+      }
+
+      .nav-links .section-link {
+        display: none;
+      }
+
+      nav {
+        min-height: 70px;
+      }
+
+      .brand {
+        font-size: 20px;
+      }
+
+      .nav-links .button {
+        padding: 10px 14px;
+      }
+
+      .leaf-art {
+        height: 240px;
+      }
+
+      section.content {
+        padding: 55px 0;
+      }
+
+      .cta,
+      .footer-inner {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .strip-inner {
+        justify-content: flex-start;
+        gap: 12px 25px;
+      }
+
+      .cg-team {
+        padding: 20px;
+      }
+
+      .cg-members {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      html {
+        scroll-behavior: auto;
+      }
+
+      .button {
+        transition: none;
+      }
+
+      .button:hover {
+        transform: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <a class="skip" href="#main">Skip to content</a>
+
+  <!-- =========================
+       HEADER
+       ========================= -->
+
+  <header>
+    <nav class="container" aria-label="Main navigation">
+
+      <a class="brand" href="#" aria-label="CropGuard AI home">
+
+        <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+          <rect width="40" height="40" rx="11" fill="#14392d"/>
+
+          <path d="M11 25C10 14 20 10 30 10C30 21 24 29 15 27"
+                fill="#d3ef87"/>
+
+          <path d="M12 31L25 17"
+                stroke="#d3ef87"
+                stroke-width="2.5"
+                stroke-linecap="round"/>
+
+          <path d="M16 26L25 17"
+                stroke="#14392d"
+                stroke-width="1.5"
+                stroke-linecap="round"/>
+        </svg>
+
+        CropGuard <span>AI</span>
+
+      </a>
+
+      <div class="nav-links">
+        <a class="section-link" href="#how-it-works">How it works</a>
+        <a class="optional" href="#technology">Technology</a>
+
+        <a class="button" href="https://demo.cropguard.in">
+          Launch Demo <span aria-hidden="true">↗</span>
+        </a>
+      </div>
+
+    </nav>
+  </header>
+
+
+  <!-- =========================
+       MAIN
+       ========================= -->
+
+  <main id="main">
+
+    <!-- HERO -->
+
+    <div class="container">
+
+      <section class="hero" aria-labelledby="hero-title">
+
+        <div>
+
+          <div class="badge">
+            NVIDIA Open Hackathon · Project Showcase
+          </div>
+
+          <h1 id="hero-title">
+            Healthier crops.<br>
+            <em>Informed decisions.</em>
+          </h1>
+
+          <p class="lead">
+            Turn a crop photo into a clearer understanding of plant health.
+            CropGuard AI combines visual analysis with retrieved agricultural
+            evidence to support your next step.
+          </p>
+
+          <div class="actions">
+
+            <a class="button" href="https://demo.cropguard.in">
+              Launch CropGuard AI
+              <span aria-hidden="true">↗</span>
+            </a>
+
+            <a class="button secondary" href="#how-it-works">
+              Explore the approach
+            </a>
+
+          </div>
+
+          <p class="small">
+            Built by MultiModel Mavericks · Hackathon prototype
+          </p>
+
+        </div>
+
+
+        <!-- HERO VISUAL -->
+
+        <div class="visual">
+
+          <div class="visual-head">
+
+            <span>
+              <span class="dot"></span>
+              From leaf to insight
+            </span>
+
+            <span>Illustration</span>
+
+          </div>
+
+          <svg class="leaf-art"
+               viewBox="0 0 400 300"
+               role="img"
+               aria-labelledby="leaf-title">
+
+            <title id="leaf-title">
+              Illustrated leaf with visible spots
+            </title>
+
+            <defs>
+              <linearGradient id="leaf-green"
+                              x1="0"
+                              y1="0"
+                              x2="1"
+                              y2="1">
+
+                <stop offset="0%" stop-color="#72a94b"/>
+                <stop offset="100%" stop-color="#164c36"/>
+
+              </linearGradient>
+            </defs>
+
+            <circle cx="200"
+                    cy="145"
+                    r="117"
+                    fill="#d5e3c7"/>
+
+            <circle cx="200"
+                    cy="145"
+                    r="92"
+                    fill="none"
+                    stroke="#b7caa4"
+                    stroke-dasharray="4 7"/>
+
+            <path d="M121 236C73 129 182 52 292 43
+                     C309 156 242 251 145 242Z"
+                  fill="url(#leaf-green)"/>
+
+            <path d="M108 269L270 65
+                     M150 218L139 153
+                     M178 187L166 117
+                     M206 155L201 89
+                     M152 218L217 218
+                     M181 183L254 176
+                     M213 148L276 132"
+                  fill="none"
+                  stroke="#accd83"
+                  stroke-width="3"
+                  stroke-linecap="round"/>
+
+            <g fill="#c9a363"
+               stroke="#8b7044"
+               stroke-width="2">
+
+              <ellipse cx="166"
+                       cy="145"
+                       rx="12"
+                       ry="9"
+                       transform="rotate(-25 166 145)"/>
+
+              <ellipse cx="226"
+                       cy="171"
+                       rx="14"
+                       ry="10"
+                       transform="rotate(-25 226 171)"/>
+
+              <ellipse cx="224"
+                       cy="105"
+                       rx="8"
+                       ry="6"/>
+
+            </g>
+
+            <g fill="none"
+               stroke="#f2f8e8"
+               stroke-width="2"
+               opacity=".8">
+
+              <path d="M90 105V80H115
+                       M285 80H310V105
+                       M90 210V235H115
+                       M285 235H310V210"/>
+
+            </g>
+
+          </svg>
+
+          <div class="sample">
+
+            <div class="sample-title">
+              ILLUSTRATIVE WORKFLOW · NOT A LIVE DIAGNOSIS
+            </div>
+
+            <h3>
+              Observe. Retrieve. Explain.
+            </h3>
+
+            <div class="tags">
+
+              <span class="tag">
+                Crop identification
+              </span>
+
+              <span class="tag">
+                Visible symptoms
+              </span>
+
+              <span class="tag">
+                Evidence-based guidance
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </div>
+
+
+    <!-- FEATURE STRIP -->
+
+    <div class="strip">
+
+      <div class="container strip-inner">
+
+        <span>Multimodal AI</span>
+        <span>Crop-focused adaptation</span>
+        <span>Evidence retrieval</span>
+        <span>Farmer-centred guidance</span>
+
+      </div>
+
+    </div>
+
+
+    <!-- HOW IT WORKS -->
+
+    <section class="content container" id="how-it-works">
+
+      <div class="section-heading">
+
+        <span class="eyebrow">
+          The approach
+        </span>
+
+        <h2>
+          A photo starts the conversation.
+        </h2>
+
+        <p>
+          Crop symptoms can look alike. Our approach connects what is visible
+          in an image with relevant agricultural information and the
+          context a farmer provides.
+        </p>
+
+      </div>
+
+
+      <div class="grid">
+
+        <article class="card">
+
+          <span class="number">01</span>
+
+          <h3>
+            Share the crop image
+          </h3>
+
+          <p>
+            Provide a clear photo of the affected plant and a question.
+            Details such as crop stage and location can help explain the situation.
+          </p>
+
+        </article>
+
+
+        <article class="card">
+
+          <span class="number">02</span>
+
+          <h3>
+            Analyse visible symptoms
+          </h3>
+
+          <p>
+            A vision-language model examines crop characteristics and visible
+            symptoms to suggest possible causes.
+          </p>
+
+        </article>
+
+
+        <article class="card">
+
+          <span class="number">03</span>
+
+          <h3>
+            Connect to evidence
+          </h3>
+
+          <p>
+            Retrieval-augmented generation brings relevant reference material
+            into the response to support understandable guidance.
+          </p>
+
+        </article>
+
+      </div>
+
+    </section>
+
+
+    <!-- TECHNOLOGY -->
+
+    <section class="content dark" id="technology">
+
+      <div class="container">
+
+        <div class="section-heading">
+
+          <span class="eyebrow">
+            Behind CropGuard
+          </span>
+
+          <h2>
+            Vision meets agricultural knowledge.
+          </h2>
+
+          <p>
+            The hackathon project brings together crop-focused model adaptation,
+            evidence retrieval and an interactive application.
+          </p>
+
+        </div>
+
+
+        <div class="grid">
+
+          <article class="card">
+
+            <h3>
+              Visual understanding
+            </h3>
+
+            <p>
+              NVIDIA Nemotron model experiments and LoRA adaptation explore
+              how multimodal AI can recognise crop-specific patterns.
+            </p>
+
+          </article>
+
+
+          <article class="card">
+
+            <h3>
+              Grounded responses
+            </h3>
+
+            <p>
+              A RAG pipeline connects the image-analysis findings with
+              agricultural reference material for more contextual answers.
+            </p>
+
+          </article>
+
+
+          <article class="card">
+
+            <h3>
+              Interactive experience
+            </h3>
+
+            <p>
+              A Streamlit demo brings image upload, questions and model
+              responses together, with GPU-backed inference on the hackathon cluster.
+            </p>
+
+          </article>
+
+        </div>
+
+
+        <p class="tech-note">
+          Research prototype: model selection, crop coverage and evaluation
+          continue to evolve during the hackathon.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- RESPONSIBLE GUIDANCE -->
+
+    <section class="content container" id="responsible-use">
+
+      <div class="split">
+
+        <div class="section-heading">
+
+          <span class="eyebrow">
+            Responsible guidance
+          </span>
+
+          <h2>
+            Useful insights begin with clear limits.
+          </h2>
+
+          <p>
+            A photograph provides clues, but it cannot capture every condition
+            affecting a crop. CropGuard is designed to support informed
+            discussion and further investigation.
+          </p>
+
+        </div>
+
+
+        <div class="principles">
+
+          <article class="principle">
+
+            <h3>
+              Make uncertainty visible
+            </h3>
+
+            <p>
+              Similar symptoms may have different causes. Suggested diagnoses
+              should be treated as possibilities to verify.
+            </p>
+
+          </article>
+
+
+          <article class="principle">
+
+            <h3>
+              Consider local context
+            </h3>
+
+            <p>
+              Crop stage, weather, soil conditions and regional practices
+              can change which advice is appropriate.
+            </p>
+
+          </article>
+
+
+          <article class="principle">
+
+            <h3>
+              Keep expert judgement involved
+            </h3>
+
+            <p>
+              Confirm consequential treatment decisions with a qualified
+              agricultural professional or local extension service.
+            </p>
+
+          </article>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =========================
+         TEAM
+         ========================= -->
+
+    <section class="content container" id="team">
+
+      <div class="cg-team"
+           aria-label="CropGuard AI team">
+
+        <div class="cg-team-label">
+          Meet the team · NVIDIA Open Hackathon
+        </div>
+
+        <h2>
+          Multimodal Mavericks
+        </h2>
+
+        <p class="cg-team-intro">
+          Four curious minds. One shared purpose:
+          bringing AI closer to the people who grow our food.
+        </p>
+
+
+        <div class="cg-members">
+
+          <div class="cg-member">
+
+            <div class="cg-initials"
+                 aria-hidden="true">
+              NK
+            </div>
+
+            <div class="cg-member-name">
+              Nagarajan Kannan
+            </div>
+
+            <div class="cg-member-role">
+              Team Member
+            </div>
+
+          </div>
+
+
+          <div class="cg-member">
+
+            <div class="cg-initials"
+                 aria-hidden="true">
+              SP
+            </div>
+
+            <div class="cg-member-name">
+              Swarnalatha P
+            </div>
+
+            <div class="cg-member-role">
+              Team Member
+            </div>
+
+          </div>
+
+
+          <div class="cg-member">
+
+            <div class="cg-initials"
+                 aria-hidden="true">
+              PR
+            </div>
+
+            <div class="cg-member-name">
+              Paalraj Rajan
+            </div>
+
+            <div class="cg-member-role">
+              Team Member
+            </div>
+
+          </div>
+
+
+          <div class="cg-member">
+
+            <div class="cg-initials"
+                 aria-hidden="true">
+              MK
+            </div>
+
+            <div class="cg-member-name">
+              Manoj Krishna Mouli
+            </div>
+
+            <div class="cg-member-role">
+              Team Member
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- MENTOR -->
+
+        <div class="cg-mentor">
+
+          <div class="cg-team-label">
+            With gratitude · Mentor from NVIDIA
+          </div>
+
+          <div class="cg-mentor-name">
+            Saurav Mishra
+          </div>
+
+          <p>
+            Thank you for your guidance and encouragement as we bring
+            CropGuard AI to life. Together, we learn, experiment and
+            turn ideas into possibilities.
+          </p>
+
+        </div>
+
+
+        <p class="cg-team-footer">
+          Built with curiosity. Strengthened by teamwork. Inspired by farmers.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- CTA -->
+
+    <section class="container" aria-labelledby="demo-title">
+
+      <div class="cta">
+
+        <div>
+
+          <span class="eyebrow">
+            Explore the prototype
+          </span>
+
+          <h2 id="demo-title">
+            Meet CropGuard AI.
+          </h2>
+
+          <p>
+            Explore our crop-health assistant and help us improve the experience
+            with real questions and feedback.
+          </p>
+
+          <p class="small">
+            Demo availability depends on the hackathon GPU session.
+          </p>
+
+        </div>
+
+
+        <a class="button" href="https://demo.cropguard.in">
+          Launch Demo
+          <span aria-hidden="true">↗</span>
+        </a>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <!-- =========================
+       FOOTER
+       ========================= -->
+
+  <footer>
+
+    <div class="container footer-inner">
+
+      <div>
+
+        <strong>
+          CropGuard AI
+        </strong>
+
+        <p>
+          Built by MultiModel Mavericks
+        </p>
+
+        <p>
+          © 2026 CropGuard AI · cropguard.in
+        </p>
+
+      </div>
+
+
+      <div class="footer-note">
+
+        <p>
+          An independent team project developed for the NVIDIA Open Hackathon.
+          References to NVIDIA describe the event and technology used;
+          they do not imply product endorsement.
+        </p>
+
+        <p>
+          Hackathon prototype for demonstration and evaluation.
+          AI-generated guidance may be incomplete or incorrect.
+        </p>
+
+      </div>
+
+    </div>
+
+  </footer>
+
+</body>
+</html>

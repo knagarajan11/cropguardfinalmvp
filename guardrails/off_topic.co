@@ -1,0 +1,18 @@
+define user ask off topic
+  "What is the capital of France?"
+  "Can you write a poem about love?"
+  "How do I fix my car?"
+  "Tell me a joke."
+  "What is the meaning of life?"
+  "Write some python code to sort a list."
+  "Who won the last super bowl?"
+  "How to cook a steak"
+
+define bot refuse off topic
+  "I am an agricultural assistant designed for CropGuard. I can only help you with farming, crop health, and plant diagnosis."
+
+define flow
+  user ask off topic
+  bot refuse off topic
+  stop
+

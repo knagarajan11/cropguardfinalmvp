@@ -1,0 +1,97 @@
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+===== LOADING BASE MODEL =====
+[ERROR] `cache_position` is part of NemotronHForCausalLM.forward's signature, but not documented. Make sure to add it to the docstring of the function in /workspace/hf_cache/modules/transformers_modules/e5e9932441de940c9a62185c870ea5bcd4cd24e2/d6489b65e6888d3f/modeling_nemotron_h.py.
+Loading weights:   0%|          | 0/7345 [00:00<?, ?it/s]Loading weights:  10%|▉         | 699/7345 [00:00<00:00, 6979.37it/s]Loading weights:  19%|█▉        | 1397/7345 [00:00<00:00, 6663.05it/s]Loading weights:  28%|██▊       | 2065/7345 [00:00<00:00, 6631.83it/s]Loading weights:  37%|███▋      | 2729/7345 [00:00<00:00, 6489.88it/s]Loading weights:  46%|████▋     | 3406/7345 [00:00<00:00, 6571.60it/s]Loading weights:  55%|█████▌    | 4066/7345 [00:00<00:00, 6576.62it/s]Loading weights:  64%|██████▍   | 4724/7345 [00:00<00:00, 6475.77it/s]Loading weights:  73%|███████▎  | 5372/7345 [00:00<00:00, 6403.66it/s]Loading weights:  82%|████████▏ | 6033/7345 [00:00<00:00, 6466.62it/s]Loading weights:  92%|█████████▏| 6725/7345 [00:01<00:00, 6601.87it/s]Loading weights: 100%|██████████| 7345/7345 [00:01<00:00, 6597.19it/s]
+[transformers] [1mNemotronH_Nano_Omni_Reasoning_V3 LOAD REPORT[0m from: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+Key                                                       | Status     | 
+----------------------------------------------------------+------------+-
+sound_encoder.encoder.feature_extractor.featurizer.window | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_mean      | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.fb     | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_std       | UNEXPECTED | 
+vision_model.radio_model.summary_idxs                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Base model loaded
+
+===== CHECKING ADAPTER =====
+Adapter tensors: 232
+LoRA target modules: 116
+
+===== CHECKING EXACT MATCH =====
+FOUND: 0
+MISSING: 116
+
+===== TRYING BACKBONE MAPPING =====
+MAPPED FOUND: 116
+MAPPED MISSING: 0
+
+===== FIRST 20 MAPPINGS =====
+language_model.model.layers.0.mixer.in_proj
+  -> language_model.backbone.layers.0.mixer.in_proj
+language_model.model.layers.0.mixer.out_proj
+  -> language_model.backbone.layers.0.mixer.out_proj
+language_model.model.layers.1.mixer.shared_experts.down_proj
+  -> language_model.backbone.layers.1.mixer.shared_experts.down_proj
+language_model.model.layers.1.mixer.shared_experts.up_proj
+  -> language_model.backbone.layers.1.mixer.shared_experts.up_proj
+language_model.model.layers.10.mixer.shared_experts.down_proj
+  -> language_model.backbone.layers.10.mixer.shared_experts.down_proj
+language_model.model.layers.10.mixer.shared_experts.up_proj
+  -> language_model.backbone.layers.10.mixer.shared_experts.up_proj
+language_model.model.layers.11.mixer.in_proj
+  -> language_model.backbone.layers.11.mixer.in_proj
+language_model.model.layers.11.mixer.out_proj
+  -> language_model.backbone.layers.11.mixer.out_proj
+language_model.model.layers.12.mixer.k_proj
+  -> language_model.backbone.layers.12.mixer.k_proj
+language_model.model.layers.12.mixer.o_proj
+  -> language_model.backbone.layers.12.mixer.o_proj
+language_model.model.layers.12.mixer.q_proj
+  -> language_model.backbone.layers.12.mixer.q_proj
+language_model.model.layers.12.mixer.v_proj
+  -> language_model.backbone.layers.12.mixer.v_proj
+language_model.model.layers.13.mixer.shared_experts.down_proj
+  -> language_model.backbone.layers.13.mixer.shared_experts.down_proj
+language_model.model.layers.13.mixer.shared_experts.up_proj
+  -> language_model.backbone.layers.13.mixer.shared_experts.up_proj
+language_model.model.layers.14.mixer.in_proj
+  -> language_model.backbone.layers.14.mixer.in_proj
+language_model.model.layers.14.mixer.out_proj
+  -> language_model.backbone.layers.14.mixer.out_proj
+language_model.model.layers.15.mixer.shared_experts.down_proj
+  -> language_model.backbone.layers.15.mixer.shared_experts.down_proj
+language_model.model.layers.15.mixer.shared_experts.up_proj
+  -> language_model.backbone.layers.15.mixer.shared_experts.up_proj
+language_model.model.layers.16.mixer.in_proj
+  -> language_model.backbone.layers.16.mixer.in_proj
+language_model.model.layers.16.mixer.out_proj
+  -> language_model.backbone.layers.16.mixer.out_proj
+
+===== FIRST 20 MISSING AFTER MAPPING =====
+
+===== MODULE TYPE CHECK =====
+language_model.backbone.layers.0.mixer.in_proj => Linear
+language_model.backbone.layers.0.mixer.out_proj => Linear
+language_model.backbone.layers.1.mixer.shared_experts.down_proj => Linear
+language_model.backbone.layers.1.mixer.shared_experts.up_proj => Linear
+language_model.backbone.layers.10.mixer.shared_experts.down_proj => Linear
+language_model.backbone.layers.10.mixer.shared_experts.up_proj => Linear
+language_model.backbone.layers.11.mixer.in_proj => Linear
+language_model.backbone.layers.11.mixer.out_proj => Linear
+language_model.backbone.layers.12.mixer.k_proj => Linear
+language_model.backbone.layers.12.mixer.o_proj => Linear
+language_model.backbone.layers.12.mixer.q_proj => Linear
+language_model.backbone.layers.12.mixer.v_proj => Linear
+language_model.backbone.layers.13.mixer.shared_experts.down_proj => Linear
+language_model.backbone.layers.13.mixer.shared_experts.up_proj => Linear
+language_model.backbone.layers.14.mixer.in_proj => Linear
+language_model.backbone.layers.14.mixer.out_proj => Linear
+language_model.backbone.layers.15.mixer.shared_experts.down_proj => Linear
+language_model.backbone.layers.15.mixer.shared_experts.up_proj => Linear
+language_model.backbone.layers.16.mixer.in_proj => Linear
+language_model.backbone.layers.16.mixer.out_proj => Linear
+
+===== DONE =====

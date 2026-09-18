@@ -1,0 +1,420 @@
+#!/usr/bin/env bash
+
+set -u
+
+ROOT="/workspace"
+RUN_DIR="$ROOT/run"
+LOG_DIR="$ROOT/logs"
+
+API_PORT="${CROPGUARD_API_PORT:-8002}"
+UI_PORT="${CROPGUARD_UI_PORT:-8502}"
+
+mkdir -p "$RUN_DIR" "$LOG_DIR"
+
+# ------------------------------------------------------------
+# Slurm job identity
+# ------------------------------------------------------------
+
+JOB_ID="${SLURM_JOB_ID:-no-slurm}"
+JOB_TAG="cropguard_${JOB_ID}"
+
+API_PID="$RUN_DIR/${JOB_TAG}_fastapi.pid"
+UI_PID="$RUN_DIR/${JOB_TAG}_streamlit.pid"
+CF_PID="$RUN_DIR/${JOB_TAG}_cloudflared.pid"
+
+API_LOG="$LOG_DIR/${JOB_TAG}_fastapi.log"
+UI_LOG="$LOG_DIR/${JOB_TAG}_streamlit.log"
+CF_LOG="$LOG_DIR/${JOB_TAG}_cloudflared.log"
+
+# ------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------
+
+pid_alive() {
+    local pid="$1"
+
+    [[ -n "$pid" ]] || return 1
+    kill -0 "$pid" 2>/dev/null
+}
+
+read_pid() {
+    local file="$1"
+
+    [[ -f "$file" ]] || return 1
+
+    cat "$file"
+}
+
+kill_owned_process() {
+    local name="$1"
+    local pidfile="$2"
+
+    if [[ ! -f "$pidfile" ]]; then
+        echo "$name: not running"
+        return 0
+    fi
+
+    local pid
+    pid="$(cat "$pidfile" 2>/dev/null || true)"
+
+    if [[ -z "$pid" ]]; then
+        echo "$name: invalid PID file"
+        rm -f "$pidfile"
+        return 0
+    fi
+
+    if ! pid_alive "$pid"; then
+        echo "$name: already stopped (PID $pid)"
+        rm -f "$pidfile"
+        return 0
+    fi
+
+    echo "Stopping $name (PID $pid)..."
+
+    # First request graceful termination.
+    kill "$pid" 2>/dev/null || true
+
+    for _ in $(seq 1 15); do
+        if ! pid_alive "$pid"; then
+            echo "$name: stopped"
+            rm -f "$pidfile"
+            return 0
+        fi
+        sleep 1
+    done
+
+    # Only kill the exact PID recorded by this job.
+    echo "$name: did not stop gracefully; sending SIGKILL to PID $pid"
+    kill -9 "$pid" 2>/dev/null || true
+
+    rm -f "$pidfile"
+    echo "$name: stopped"
+}
+
+# ------------------------------------------------------------
+# START
+# ------------------------------------------------------------
+
+start() {
+
+    echo
+    echo "========================================"
+    echo "       CROP GUARD FINAL MVP"
+    echo "              START"
+    echo "========================================"
+    echo "Node:     $(hostname)"
+    echo "Slurm ID: $JOB_ID"
+    echo
+
+    if [[ "$JOB_ID" == "no-slurm" ]]; then
+        echo "WARNING: SLURM_JOB_ID is not set."
+        echo "CropGuard should normally be started inside an srun allocation."
+        echo
+    fi
+
+    # --------------------------------------------------------
+    # FastAPI
+    # --------------------------------------------------------
+
+    if curl -fsS "http://127.0.0.1:${API_PORT}/health" >/dev/null 2>&1; then
+
+        echo "FastAPI is already responding on :${API_PORT}"
+
+    else
+
+        echo "Starting FastAPI..."
+
+        nohup /opt/venv/bin/python -m uvicorn api.main:app \
+            --host 0.0.0.0 \
+            --port "$API_PORT" \
+            > "$API_LOG" 2>&1 &
+
+        API_PID_VALUE=$!
+        echo "$API_PID_VALUE" > "$API_PID"
+
+        echo "FastAPI PID: $API_PID_VALUE"
+        echo "Waiting for model/API startup..."
+
+        READY=0
+
+        for _ in $(seq 1 600); do
+
+            if curl -fsS \
+                "http://127.0.0.1:${API_PORT}/health" \
+                >/dev/null 2>&1; then
+
+                READY=1
+                break
+            fi
+
+            # Detect an early process failure.
+            if ! pid_alive "$API_PID_VALUE"; then
+                break
+            fi
+
+            sleep 1
+        done
+
+        if [[ "$READY" != "1" ]]; then
+
+            echo
+            echo "ERROR: FastAPI did not become healthy."
+            echo
+            echo "Last FastAPI log:"
+            tail -100 "$API_LOG"
+
+            kill_owned_process "FastAPI" "$API_PID"
+            exit 1
+        fi
+
+        echo "FastAPI: READY"
+        curl -s "http://127.0.0.1:${API_PORT}/health"
+        echo
+    fi
+
+    # --------------------------------------------------------
+    # Streamlit
+    # --------------------------------------------------------
+
+    if curl -fsS \
+        "http://127.0.0.1:${UI_PORT}" \
+        >/dev/null 2>&1; then
+
+        echo "Streamlit is already responding on :${UI_PORT}"
+
+    else
+
+        echo "Starting Streamlit..."
+
+        nohup /opt/venv/bin/python -m streamlit run \
+            "$ROOT/ui/app.py" \
+            --server.port "$UI_PORT" \
+            --server.address 0.0.0.0 \
+            --server.headless true \
+            --server.enableCORS false \
+            > "$UI_LOG" 2>&1 &
+
+        UI_PID_VALUE=$!
+        echo "$UI_PID_VALUE" > "$UI_PID"
+
+        echo "Streamlit PID: $UI_PID_VALUE"
+
+        READY=0
+
+        for _ in $(seq 1 60); do
+
+            if curl -fsS \
+                "http://127.0.0.1:${UI_PORT}" \
+                >/dev/null 2>&1; then
+
+                READY=1
+                break
+            fi
+
+            if ! pid_alive "$UI_PID_VALUE"; then
+                break
+            fi
+
+            sleep 1
+        done
+
+        if [[ "$READY" != "1" ]]; then
+
+            echo
+            echo "ERROR: Streamlit did not become ready."
+            echo
+            tail -100 "$UI_LOG"
+
+            kill_owned_process "Streamlit" "$UI_PID"
+            exit 1
+        fi
+
+        echo "Streamlit: READY"
+    fi
+
+    # --------------------------------------------------------
+    # Cloudflare
+    # --------------------------------------------------------
+
+    CF="$HOME/bin/cloudflared"
+
+    if [[ ! -x "$CF" ]]; then
+        echo
+        echo "ERROR: cloudflared not found:"
+        echo "$CF"
+        exit 1
+    fi
+
+    if [[ -f "$CF_PID" ]]; then
+
+        EXISTING_CF_PID="$(cat "$CF_PID" 2>/dev/null || true)"
+
+        if pid_alive "$EXISTING_CF_PID"; then
+            echo "Cloudflared already running (PID $EXISTING_CF_PID)"
+        else
+            rm -f "$CF_PID"
+        fi
+    fi
+
+    if [[ ! -f "$CF_PID" ]]; then
+
+        echo "Starting Cloudflare Tunnel..."
+
+        nohup "$CF" tunnel \
+            --url "http://127.0.0.1:${UI_PORT}" \
+            > "$CF_LOG" 2>&1 &
+
+        CF_PID_VALUE=$!
+        echo "$CF_PID_VALUE" > "$CF_PID"
+
+        echo "Cloudflared PID: $CF_PID_VALUE"
+
+        sleep 5
+    fi
+
+    # --------------------------------------------------------
+    # Summary
+    # --------------------------------------------------------
+
+    echo
+    echo "========================================"
+    echo "        CROP GUARD IS READY"
+    echo "========================================"
+    echo "Node:      $(hostname)"
+    echo "Slurm ID:  $JOB_ID"
+    echo
+    echo "FastAPI:   http://127.0.0.1:${API_PORT}"
+    echo "Streamlit: http://127.0.0.1:${UI_PORT}"
+    echo
+    echo "Health:"
+    curl -s "http://127.0.0.1:${API_PORT}/health"
+    echo
+    echo
+    echo "Cloudflare URL:"
+    grep -Eo \
+        'https://[a-zA-Z0-9-]+\.trycloudflare\.com' \
+        "$CF_LOG" | tail -1 || \
+        echo "Still starting; check $CF_LOG"
+    echo
+    echo "PID files:"
+    echo "  $API_PID"
+    echo "  $UI_PID"
+    echo "  $CF_PID"
+    echo
+    echo "========================================"
+}
+
+# ------------------------------------------------------------
+# STOP
+# ------------------------------------------------------------
+
+stop() {
+
+    echo
+    echo "========================================"
+    echo "       CROP GUARD FINAL MVP"
+    echo "              STOP"
+    echo "========================================"
+    echo "Node:     $(hostname)"
+    echo "Slurm ID: $JOB_ID"
+    echo
+
+    # Stop ONLY PIDs recorded for THIS Slurm job.
+    kill_owned_process "Cloudflared" "$CF_PID"
+    kill_owned_process "Streamlit" "$UI_PID"
+    kill_owned_process "FastAPI" "$API_PID"
+
+    echo
+    echo "CropGuard processes for Slurm job $JOB_ID stopped."
+    echo "========================================"
+}
+
+# ------------------------------------------------------------
+# STATUS
+# ------------------------------------------------------------
+
+status() {
+
+    echo
+    echo "========================================"
+    echo "       CROP GUARD STATUS"
+    echo "========================================"
+    echo "Node:     $(hostname)"
+    echo "Slurm ID: $JOB_ID"
+    echo
+
+    echo "FastAPI:"
+    if curl -fsS "http://127.0.0.1:${API_PORT}/health" 2>/dev/null; then
+        echo
+        echo "  READY"
+    else
+        echo "  NOT RESPONDING"
+    fi
+
+    echo
+    echo "Streamlit:"
+    if curl -fsS "http://127.0.0.1:${UI_PORT}" >/dev/null 2>&1; then
+        echo "  READY"
+    else
+        echo "  NOT RESPONDING"
+    fi
+
+    echo
+    echo "Recorded PIDs:"
+
+    for file in "$API_PID" "$UI_PID" "$CF_PID"; do
+
+        if [[ -f "$file" ]]; then
+
+            pid="$(cat "$file" 2>/dev/null || true)"
+
+            if pid_alive "$pid"; then
+                echo "  RUNNING  PID=$pid  $file"
+            else
+                echo "  STOPPED  PID=$pid  $file"
+            fi
+
+        else
+            echo "  NONE     $file"
+        fi
+    done
+
+    echo
+    echo "========================================"
+}
+
+# ------------------------------------------------------------
+# COMMAND
+# ------------------------------------------------------------
+
+case "${1:-}" in
+
+    start)
+        start
+        ;;
+
+    stop)
+        stop
+        ;;
+
+    status)
+        status
+        ;;
+
+    restart)
+        stop
+        sleep 2
+        start
+        ;;
+
+    *)
+        echo "Usage:"
+        echo
+        echo "  $0 start"
+        echo "  $0 stop"
+        echo "  $0 status"
+        echo "  $0 restart"
+        echo
+        exit 1
+        ;;
+esac

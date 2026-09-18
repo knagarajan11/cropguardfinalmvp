@@ -1,0 +1,40 @@
+{
+  "manifest_version": 1,
+  "updated_at": "2026-09-13T00:35:50.344790+00:00",
+  "embedding_model": "nvidia/llama-nemotron-embed-1b-v2",
+  "model_retraining": false,
+  "rebuilt_domains": [
+    "diagnosis",
+    "treatment"
+  ],
+  "sources": {
+    "diagnosis": {
+      "plantvillage": {
+        "path": "/workspace/data/processed/plantvillage_normalized.jsonl",
+        "size": 31351493,
+        "mtime_ns": 1788840459495958052,
+        "sha256": "3a3a6411be4cdb0e0828644cc9aefdd06c6b7c433835e93c95073267ce6ca439"
+      },
+      "plantdoc": {
+        "path": "/workspace/data/processed/plantdoc_normalized.jsonl",
+        "size": 1359171,
+        "mtime_ns": 1788840459525957827,
+        "sha256": "9129a17b4bf88ea771b76b048a7130eb11f435e88bbcb223fcceab17f75f575e"
+      },
+      "rice": {
+        "path": "/workspace/data/processed/rice1426_normalized.jsonl",
+        "size": 994974,
+        "mtime_ns": 1788840459535957751,
+        "sha256": "f846218178b050e752792e33efc771a0a6d53a861d5f0ab944ad557b279f4c6b"
+      }
+    },
+    "treatment": {
+      "treatment": {
+        "path": "/workspace/knowledge/sample_data/treatment_knowledge.jsonl",
+        "size": 3918,
+        "mtime_ns": 1789248579094436277,
+        "sha256": "169cc391eec7dcd3683008687aa11498c92874f79e7c46434e150ce0e442c665"
+      }
+    }
+  }
+}

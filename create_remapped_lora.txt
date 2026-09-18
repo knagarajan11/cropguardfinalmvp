@@ -1,0 +1,32 @@
+===== CREATE REMAPPED LORA =====
+SOURCE: /workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model
+DEST  : /workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model_remapped
+
+Original target modules: 116
+Remapped target modules: 116
+Saved: /workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model_remapped/adapter_config.json
+
+Loading LoRA tensors...
+Original tensor count: 232
+Remapped tensor count: 232
+
+Original layer-path tensors : 232
+Remapped layer-path tensors : 232
+
+Saved: /workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model_remapped/adapter_model.safetensors
+
+===== FINAL VALIDATION =====
+Config target modules: 116
+Weight tensors: 232
+Old config paths remaining: 0
+Old weight paths remaining: 0
+New config paths: 116
+New weight paths: 232
+
+======================================
+REMAP SUCCESSFUL
+======================================
+116 target modules : OK
+232 LoRA tensors   : OK
+Original checkpoint: UNTOUCHED
+======================================

@@ -1,0 +1,430 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from index.recommendation_retriever import (
+    RecommendationRetriever,
+)
+from reranker.nvidia_reranker import (
+    NVIDIAReranker,
+    RerankerResult,
+)
+from evidence.evidence_filter import (
+    EvidenceFilter,
+    EvidenceFilterResult,
+)
+
+
+@dataclass
+class KnowledgeAgentResult:
+    """
+    Final result from the CropGuard unified recommendation
+    knowledge pipeline.
+
+    Evidence reaching accepted_evidence has passed:
+
+        Unified Recommendation Retrieval
+            ->
+        NVIDIA Reranker
+            ->
+        Evidence Filter
+
+    Grounded Generation must consume ONLY accepted_evidence.
+    """
+
+    status: str
+
+    query: str
+    crop: str | None
+    disease: str | None
+    evidence_type: str | None
+    recommendation_preference: str
+
+    accepted_evidence: list[RerankerResult] = field(
+        default_factory=list
+    )
+
+    rejected_evidence: list[RerankerResult] = field(
+        default_factory=list
+    )
+
+    reasons: list[str] = field(
+        default_factory=list
+    )
+
+    hybrid_candidates: int = 0
+    reranked_candidates: int = 0
+
+    @property
+    def sufficient(self) -> bool:
+        return self.status == "SUFFICIENT"
+
+    @property
+    def abstain(self) -> bool:
+        return self.status != "SUFFICIENT"
+
+    def traceability(self) -> list[dict[str, Any]]:
+        """
+        Return compact evidence traceability information.
+        """
+
+        trace = []
+
+        for item in self.accepted_evidence:
+            trace.append(
+                {
+                    "chunk_id": item.chunk_id,
+                    "knowledge_id": item.knowledge_id,
+                    "source": item.metadata.get("source"),
+                    "source_type": item.metadata.get(
+                        "source_type"
+                    ),
+                    "source_uri": item.metadata.get(
+                        "source_uri"
+                    ),
+                    "document_id": item.metadata.get(
+                        "document_id"
+                    ),
+                    "document_title": item.metadata.get(
+                        "document_title"
+                    ),
+                    "page": item.metadata.get("page"),
+                    "section": item.metadata.get("section"),
+                    "subsection": item.metadata.get(
+                        "subsection"
+                    ),
+                    "crop": item.metadata.get("crop"),
+                    "disease": item.metadata.get("disease"),
+                    "evidence_type": item.metadata.get(
+                        "evidence_type"
+                    ),
+                    "recommendation_preference": item.metadata.get(
+                        "recommendation_preference"
+                    ),
+                    "organic_eligible": item.metadata.get(
+                        "organic_eligible"
+                    ),
+                    "ipm_eligible": item.metadata.get(
+                        "ipm_eligible"
+                    ),
+                    "reranker_score": item.reranker_score,
+                    "vector_score": item.vector_score,
+                    "bm25_score": item.bm25_score,
+                    "hybrid_score": item.hybrid_score,
+                }
+            )
+
+        return trace
+
+
+def _normalize_context_label(value: str | None) -> str | None:
+    """
+    Normalize frozen Diagnosis Agent labels for application-level
+    recommendation lookup.
+
+    The frozen diagnosis model may return:
+      - common name + scientific name
+      - parenthetical explanatory text
+      - explanatory text after an em dash
+      - explanatory text after a comma
+      - phrases such as "which is ..."
+      - spaces instead of canonical underscores
+
+    This function does NOT modify the diagnosis model or knowledge
+    records. It only creates a canonical lookup key.
+    """
+
+    if value is None:
+        return None
+
+    value = value.strip()
+
+    if not value:
+        return None
+
+    import re
+
+    # Keep the primary label before an em dash.
+    value = value.split("—", 1)[0].strip()
+
+    # Remove parenthetical scientific/explanatory information.
+    value = re.sub(r"\s*\([^)]*\)", "", value)
+
+    # Remove explanatory clauses after a comma.
+    value = value.split(",", 1)[0].strip()
+
+    # Remove common explanatory continuation.
+    value = re.split(
+        r"\s+which\s+is\s+",
+        value,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0].strip()
+
+    # Remove trailing punctuation.
+    value = value.strip(" .;:()")
+
+    # Canonical application lookup form.
+    value = value.lower()
+    value = re.sub(r"\s+", "_", value)
+    value = re.sub(r"_+", "_", value)
+    value = value.strip("_")
+
+    return value or None
+
+
+
+class KnowledgeAgent:
+    """
+    CropGuard Knowledge Agent.
+
+    Final MVP recommendation path:
+
+        Farmer query
+             ->
+        Unified Recommendation Retrieval
+             |
+             +-- Knowledge JSON
+             +-- PDF sources
+             +-- HTML/Web sources
+             |
+             ->
+        FAISS IndexFlatIP
+             ->
+        NVIDIA Reranker
+             ->
+        Evidence Filter
+             ->
+        Safe evidence package
+
+    This agent does NOT generate the final answer.
+
+    The existing HybridRetriever remains available elsewhere
+    for the validated legacy/internal treatment retrieval path,
+    but the Final MVP Knowledge Agent uses the unified
+    recommendation index.
+    """
+
+    def __init__(
+        self,
+        *,
+        recommendation_index_path: str = (
+            "/workspace/index/recommendation"
+        ),
+        retriever: RecommendationRetriever | None = None,
+        reranker: NVIDIAReranker | None = None,
+        evidence_filter: EvidenceFilter | None = None,
+        candidate_k: int = 5,
+        rerank_top_k: int = 5,
+        min_reranker_score: float | None = None,
+    ) -> None:
+
+        self.retriever = (
+            retriever
+            if retriever is not None
+            else RecommendationRetriever(
+                index_dir=recommendation_index_path,
+            )
+        )
+
+        self.reranker = (
+            reranker
+            if reranker is not None
+            else NVIDIAReranker()
+        )
+
+        self.evidence_filter = (
+            evidence_filter
+            if evidence_filter is not None
+            else EvidenceFilter(
+                min_reranker_score=min_reranker_score,
+                require_relevant_evidence=True,
+            )
+        )
+
+        self.candidate_k = candidate_k
+        self.rerank_top_k = rerank_top_k
+
+    def retrieve(
+        self,
+        *,
+        query: str,
+        crop: str | None = None,
+        disease: str | None = None,
+        evidence_type: str = "treatment",
+        recommendation_preference: str = "General",
+        top_k: int | None = None,
+    ) -> KnowledgeAgentResult:
+        """
+        Execute the complete unified retrieval-to-evidence
+        pipeline.
+
+        No generation is performed here.
+        """
+
+        if not query or not query.strip():
+            raise ValueError(
+                "query must not be empty"
+            )
+
+        requested_top_k = (
+            top_k
+            if top_k is not None
+            else self.rerank_top_k
+        )
+
+        # ---------------------------------------------------------
+        # 1. Unified Recommendation Retrieval
+        #
+        # Sources are already consolidated into the persisted
+        # recommendation FAISS index:
+        #
+        #   Knowledge JSON
+        #   PDF
+        #   HTML/Web
+        # ---------------------------------------------------------
+
+        # Normalize frozen Diagnosis Agent labels only for
+        # application-level knowledge lookup.
+        retrieval_crop = _normalize_context_label(crop)
+        retrieval_disease = _normalize_context_label(disease)
+
+        retrieval_results = self.retriever.search(
+            query=query,
+            top_k=self.candidate_k,
+            crop=retrieval_crop,
+            disease=retrieval_disease,
+        )
+
+        # ---------------------------------------------------------
+        # Preference-aware candidate selection
+        #
+        # For explicit Organic/IPM requests, matching-policy
+        # evidence must not be crowded out by General evidence
+        # before reranking.
+        #
+        # The Evidence Filter remains the final authoritative
+        # policy and safety gate.
+        #
+        # Original KB metadata is preserved unchanged.
+        # ---------------------------------------------------------
+
+        rerank_candidates = retrieval_results
+
+        if recommendation_preference in {"Organic", "IPM"}:
+            matching_candidates = []
+
+            requested_preference = (
+                recommendation_preference.strip().lower()
+            )
+
+            for item in retrieval_results:
+                metadata = getattr(item, "metadata", None)
+
+                if metadata is None and isinstance(item, dict):
+                    metadata = item.get("metadata", {})
+
+                metadata = dict(metadata or {})
+
+                actual_preference = str(
+                    metadata.get(
+                        "recommendation_preference",
+                        "",
+                    )
+                ).strip().lower()
+
+                if actual_preference == requested_preference:
+                    matching_candidates.append(item)
+
+            # If explicit policy evidence exists, rerank only
+            # that policy-specific candidate set.
+            #
+            # If none exists, preserve the original candidates so
+            # the Evidence Filter can safely abstain.
+            if matching_candidates:
+                rerank_candidates = matching_candidates
+
+        # ---------------------------------------------------------
+        # 2. NVIDIA Reranker
+        # ---------------------------------------------------------
+
+        reranked_results = self.reranker.rerank(
+            query=query,
+            candidates=rerank_candidates,
+            top_k=requested_top_k,
+        )
+
+        # ---------------------------------------------------------
+        # 3. Evidence Filter
+        #
+        # IMPORTANT:
+        # The requested recommendation preference is passed
+        # explicitly to the final policy gate.
+        #
+        # Relevance and policy eligibility remain separate.
+        # ---------------------------------------------------------
+
+        filtered: EvidenceFilterResult = (
+            self.evidence_filter.filter(
+                reranked_results,
+                crop=retrieval_crop,
+                disease=retrieval_disease,
+                evidence_type=evidence_type,
+                recommendation_preference=(
+                    recommendation_preference
+                ),
+            )
+        )
+
+        return KnowledgeAgentResult(
+            status=filtered.status,
+            query=query,
+            crop=crop,
+            disease=disease,
+            evidence_type=evidence_type,
+            recommendation_preference=(
+                recommendation_preference
+            ),
+            accepted_evidence=[
+                item
+                for item in filtered.accepted
+                if isinstance(item, RerankerResult)
+            ],
+            rejected_evidence=[
+                item
+                for item in filtered.rejected
+                if isinstance(item, RerankerResult)
+            ],
+            reasons=list(filtered.reasons),
+            hybrid_candidates=len(retrieval_results),
+            reranked_candidates=len(reranked_results),
+        )
+
+    def info(self) -> dict[str, Any]:
+        return {
+            "agent": "CropGuard Knowledge Agent",
+            "retrieval": (
+                "Unified Recommendation RAG: "
+                "JSON + PDF + HTML/Web + "
+                "NVIDIA Embed VL 1B v2 + FAISS IndexFlatIP"
+            ),
+            "retriever": (
+                self.retriever.info()
+                if hasattr(self.retriever, "info")
+                else {}
+            ),
+            "reranker": self.reranker.info(),
+            "evidence_filter": {
+                "min_reranker_score": (
+                    self.evidence_filter.min_reranker_score
+                ),
+                "require_relevant_evidence": (
+                    self.evidence_filter.require_relevant_evidence
+                ),
+            },
+            "candidate_k": self.candidate_k,
+            "rerank_top_k": self.rerank_top_k,
+            "generation": False,
+            "inference_only": True,
+        }

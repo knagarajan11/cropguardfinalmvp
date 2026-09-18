@@ -1,0 +1,17 @@
+[
+  {
+    "domain": "treatment",
+    "records": 6,
+    "chunks": 6,
+    "vectors": 6,
+    "dimension": 2048,
+    "embedding_model": "nvidia/llama-nemotron-embed-1b-v2",
+    "embedding_normalized": true,
+    "embedding_batch_size": 16,
+    "sources": [
+      "SampleMVP"
+    ],
+    "created_at": "2026-09-12T17:35:49",
+    "build_seconds": 7.4
+  }
+]

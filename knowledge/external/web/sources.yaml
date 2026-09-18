@@ -1,0 +1,148 @@
+external_knowledge:
+  enabled: true
+
+  embedding:
+    model: nvidia/llama-nemotron-embed-vl-1b-v2
+    chunk_size: 1000
+    chunk_overlap: 150
+    index_type: FAISS-IndexFlatIP
+
+  pdf:
+    enabled: true
+    path: /workspace/knowledge/external/pdf
+
+  web:
+    enabled: true
+    sources:
+
+      # ---------------------------------------------------------
+      # TNAU - Existing Tomato disease source
+      # ---------------------------------------------------------
+      - source_id: tnau_tomato_diseases_existing_001
+        name: TNAU Agritech Portal - Tomato Diseases Existing
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_phdiseases_4.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      # ---------------------------------------------------------
+      # TNAU - Tomato Diseases 1-12
+      # ---------------------------------------------------------
+      - source_id: tnau_tomato_diseases_001
+        name: TNAU Agritech Portal - Tomato Diseases 1
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_1.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_002
+        name: TNAU Agritech Portal - Tomato Diseases 2
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_2.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_003
+        name: TNAU Agritech Portal - Tomato Diseases 3
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_3.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_004
+        name: TNAU Agritech Portal - Tomato Diseases 4
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_4.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_005
+        name: TNAU Agritech Portal - Tomato Diseases 5
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_5.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_006
+        name: TNAU Agritech Portal - Tomato Diseases 6
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_6.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_007
+        name: TNAU Agritech Portal - Tomato Diseases 7
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_7.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_008
+        name: TNAU Agritech Portal - Tomato Diseases 8
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_8.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_009
+        name: TNAU Agritech Portal - Tomato Diseases 9
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_9.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_010
+        name: TNAU Agritech Portal - Tomato Diseases 10
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_10.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_011
+        name: TNAU Agritech Portal - Tomato Diseases 11
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_11.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      - source_id: tnau_tomato_diseases_012
+        name: TNAU Agritech Portal - Tomato Diseases 12
+        url: https://agritech.tnau.ac.in/crop_protection/tomato_diseases_12.html
+        source_type: web
+        authority: institutional
+        verify_ssl: false
+        enabled: true
+
+      # ---------------------------------------------------------
+      # Cornell - Northern Corn Leaf Blight
+      # ---------------------------------------------------------
+      - source_id: cornell_northern_corn_leaf_blight_001
+        name: Cornell University - Northern Corn Leaf Blight
+        url: https://www.vegetables.cornell.edu/pest-management/disease-factsheets/northern-corn-leaf-blight-of-sweet-corn/
+        source_type: web
+        authority: university_extension
+        verify_ssl: true
+        enabled: true
+
+      # ---------------------------------------------------------
+      # Cornell - Tomato Diseases
+      # ---------------------------------------------------------
+      - source_id: cornell_tomato_diseases_001
+        name: Cornell University - Managing Tomato Diseases Successfully
+        url: https://www.vegetables.cornell.edu/pest-management/disease-factsheets/managing-tomato-diseases-successfully/
+        source_type: web
+        authority: university_extension
+        verify_ssl: true
+        enabled: true

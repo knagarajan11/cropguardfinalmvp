@@ -1,0 +1,318 @@
+"""CropGuard application orchestration service."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from PIL import Image
+
+from agents.context_agent import (
+    ContextAgent,
+    FarmerProfile,
+)
+from agents.diagnosis_agent import DiagnosisAgent
+from agents.generation_agent import GroundedGenerationAgent
+from agents.knowledge_agent import KnowledgeAgent
+from vision.nemotron_omni import (
+    NemotronOmniConfig,
+    NemotronOmniVisionModel,
+)
+
+from api.schemas import (
+    CropGuardResponse,
+    DiagnosisResponse,
+    EvidenceResponse,
+)
+
+
+class CropGuardService:
+    """Orchestrates the validated CropGuard agent pipeline.
+
+    Model lifecycle:
+        One frozen Nemotron Omni + CropGuard LoRA instance is shared by
+        DiagnosisAgent and GroundedGenerationAgent.
+
+    No training, merging, remapping, or model modification occurs here.
+    """
+
+    def __init__(
+        self,
+        *,
+        base_model_path: str,
+        lora_adapter_path: str,
+        device: str = "cuda:0",
+        max_new_tokens: int = 1536,
+    ) -> None:
+
+        self.base_model_path = Path(base_model_path)
+        self.lora_adapter_path = Path(lora_adapter_path)
+        self.device = device
+        self.max_new_tokens = max_new_tokens
+
+        self.model: NemotronOmniVisionModel | None = None
+        self.diagnosis_agent: DiagnosisAgent | None = None
+        self.knowledge_agent: KnowledgeAgent | None = None
+        self.generation_agent: GroundedGenerationAgent | None = None
+
+        self.loaded = False
+
+    def load(self) -> None:
+        """Load all runtime components."""
+
+        if self.loaded:
+            return
+
+        config = NemotronOmniConfig(
+            base_model_path=self.base_model_path,
+            lora_adapter_path=self.lora_adapter_path,
+            device=self.device,
+            dtype="bfloat16",
+            max_new_tokens=self.max_new_tokens,
+            expected_lora_modules=116,
+        )
+
+        # ---------------------------------------------------------
+        # ONE frozen Nemotron Omni + CropGuard LoRA instance
+        # ---------------------------------------------------------
+
+        self.model = NemotronOmniVisionModel(config)
+        self.model.load()
+
+        # ---------------------------------------------------------
+        # Agents sharing the same model
+        # ---------------------------------------------------------
+
+        self.diagnosis_agent = DiagnosisAgent(
+            model=self.model
+        )
+
+        self.knowledge_agent = KnowledgeAgent(
+            recommendation_index_path=(
+                "/workspace/index/recommendation"
+            ),
+            candidate_k=5,
+            rerank_top_k=5,
+            min_reranker_score=5.0,
+        )
+
+        self.generation_agent = GroundedGenerationAgent(
+            self.model
+        )
+
+        self.loaded = True
+
+    def close(self) -> None:
+        """Release runtime resources."""
+
+        if self.model is not None:
+            self.model.close()
+
+        self.model = None
+        self.diagnosis_agent = None
+        self.knowledge_agent = None
+        self.generation_agent = None
+        self.loaded = False
+
+    def health(self) -> dict:
+        """Return service health state."""
+
+        return {
+            "status": "ok" if self.loaded else "not_ready",
+            "model_loaded": self.model is not None and self.loaded,
+            "diagnosis_agent": self.diagnosis_agent is not None,
+            "knowledge_agent": self.knowledge_agent is not None,
+            "generation_agent": self.generation_agent is not None,
+        }
+
+    def diagnose(
+        self,
+        *,
+        image_path: str,
+        farmer_query: str,
+        preferred_language: str = "English",
+        location: str | None = None,
+        recommendation_preference: str = "General",
+        farmer_id: str | None = None,
+        farmer_name: str | None = None,
+    ) -> CropGuardResponse:
+        """Execute the complete CropGuard pipeline."""
+
+        if not self.loaded:
+            raise RuntimeError(
+                "CropGuard service is not loaded."
+            )
+
+        if self.diagnosis_agent is None:
+            raise RuntimeError(
+                "Diagnosis Agent is unavailable."
+            )
+
+        if self.knowledge_agent is None:
+            raise RuntimeError(
+                "Knowledge Agent is unavailable."
+            )
+
+        if self.generation_agent is None:
+            raise RuntimeError(
+                "Generation Agent is unavailable."
+            )
+
+        if not farmer_query.strip():
+            raise ValueError(
+                "farmer_query must not be empty."
+            )
+
+        # ---------------------------------------------------------
+        # 1. Load image
+        # ---------------------------------------------------------
+
+        image = Image.open(image_path).convert("RGB")
+
+        # ---------------------------------------------------------
+        # 2. Diagnosis
+        # ---------------------------------------------------------
+
+        diagnosis = self.diagnosis_agent.diagnose(
+            image=image,
+            farmer_query=farmer_query,
+            max_new_tokens=self.max_new_tokens,
+        )
+
+        # ---------------------------------------------------------
+        # 3. Context
+        # ---------------------------------------------------------
+
+        context_agent = ContextAgent()
+
+        context_agent.set_farmer_profile(
+            FarmerProfile(
+                farmer_id=farmer_id,
+                name=farmer_name,
+                preferred_language=preferred_language,
+                location=location,
+            )
+        )
+
+        context_agent.set_recommendation_preference(
+            recommendation_preference
+        )
+
+        context_agent.start_new_case(
+            image_path=image_path,
+            farmer_query=farmer_query,
+        )
+
+        context_agent.update_diagnosis(
+            crop=diagnosis.crop,
+            disease=diagnosis.disease,
+            symptoms=diagnosis.symptoms,
+            confidence=diagnosis.confidence,
+        )
+
+        context = context_agent.build_context()
+
+        # ---------------------------------------------------------
+        # 4. Knowledge retrieval + reranking + Evidence Filter
+        # ---------------------------------------------------------
+
+        retrieval_query = (
+            f"{farmer_query.strip()} "
+            f"Diagnosed crop: {diagnosis.crop}. "
+            f"Diagnosed disease: "
+            f"{diagnosis.disease.replace('_', ' ')}."
+        )
+
+        knowledge = self.knowledge_agent.retrieve(
+            query=retrieval_query,
+            crop=diagnosis.crop,
+            disease=diagnosis.disease,
+            evidence_type="treatment",
+            recommendation_preference=(
+                context.recommendation_preference
+            ),
+            top_k=5,
+        )
+
+
+        # ---------------------------------------------------------
+        # 5. Grounded Generation
+        #
+        # Generation Agent itself enforces the safety gate:
+        # insufficient/conflicting evidence -> model_called=False
+        # ---------------------------------------------------------
+
+        generation = self.generation_agent.generate(
+            image=image,
+            knowledge_result=knowledge,
+            farmer_query=farmer_query,
+            preferred_language=preferred_language,
+            max_new_tokens=self.max_new_tokens,
+        )
+
+        evidence = [
+            EvidenceResponse(
+                knowledge_id=item.knowledge_id,
+                chunk_id=item.chunk_id,
+                source=item.metadata.get(
+                    "source",
+                    "Unknown",
+                ),
+                source_type=item.metadata.get(
+                    "source_type",
+                    "Unknown",
+                ),
+                crop=item.metadata.get("crop"),
+                disease=item.metadata.get("disease"),
+                evidence_type=item.metadata.get(
+                    "evidence_type"
+                ),
+                recommendation_preference=item.metadata.get(
+                    "recommendation_preference"
+                ),
+                reranker_score=float(
+                    item.reranker_score
+                ),
+                vector_score=(
+                    float(item.vector_score)
+                    if item.vector_score is not None
+                    else None
+                ),
+                bm25_score=(
+                    float(item.bm25_score)
+                    if item.bm25_score is not None
+                    else None
+                ),
+                hybrid_score=(
+                    float(item.hybrid_score)
+                    if item.hybrid_score is not None
+                    else None
+                ),
+            )
+            for item in knowledge.accepted_evidence
+        ]
+
+        return CropGuardResponse(
+            status=generation.status,
+            answer=generation.answer,
+            diagnosis=DiagnosisResponse(
+                crop=diagnosis.crop,
+                disease=diagnosis.disease,
+                symptoms=diagnosis.symptoms,
+                confidence=diagnosis.confidence,
+            ),
+            recommendation_preference=(
+                generation.recommendation_preference
+            ),
+            language=context.language,
+            evidence_count=generation.evidence_count,
+            evidence=evidence,
+            traceability=generation.traceability,
+            model_called=generation.model_called,
+            generated_token_count=(
+                generation.generated_token_count
+            ),
+            truncated=generation.truncated,
+            inference_time_seconds=(
+                generation.inference_time_seconds
+            ),
+        )

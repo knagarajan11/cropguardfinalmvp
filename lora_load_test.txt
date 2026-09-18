@@ -1,0 +1,28 @@
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+===== STEP 1: LOAD BASE =====
+[ERROR] `cache_position` is part of NemotronHForCausalLM.forward's signature, but not documented. Make sure to add it to the docstring of the function in /workspace/hf_cache/modules/transformers_modules/e5e9932441de940c9a62185c870ea5bcd4cd24e2/d6489b65e6888d3f/modeling_nemotron_h.py.
+Loading weights:   0%|          | 0/7345 [00:00<?, ?it/s]Loading weights:   9%|▉         | 673/7345 [00:00<00:00, 6726.80it/s]Loading weights:  20%|█▉        | 1456/7345 [00:00<00:00, 7374.65it/s]Loading weights:  30%|██▉       | 2194/7345 [00:00<00:00, 6942.90it/s]Loading weights:  39%|███▉      | 2892/7345 [00:00<00:00, 6731.13it/s]Loading weights:  49%|████▊     | 3568/7345 [00:00<00:00, 6679.16it/s]Loading weights:  58%|█████▊    | 4238/7345 [00:00<00:00, 6640.94it/s]Loading weights:  67%|██████▋   | 4903/7345 [00:00<00:00, 6587.07it/s]Loading weights:  76%|███████▌  | 5563/7345 [00:00<00:00, 6522.45it/s]Loading weights:  85%|████████▍ | 6234/7345 [00:00<00:00, 6573.88it/s]Loading weights:  94%|█████████▍| 6936/7345 [00:01<00:00, 6704.35it/s]Loading weights: 100%|██████████| 7345/7345 [00:01<00:00, 6737.14it/s]
+[transformers] [1mNemotronH_Nano_Omni_Reasoning_V3 LOAD REPORT[0m from: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+Key                                                       | Status     | 
+----------------------------------------------------------+------------+-
+sound_encoder.encoder.feature_extractor.featurizer.window | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_mean      | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.fb     | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_std       | UNEXPECTED | 
+vision_model.radio_model.summary_idxs                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+BASE MODEL: OK
+
+===== STEP 2: LOAD MAPPED LORA =====
+LORA ADAPTER: OK
+
+===== STEP 3: PEFT MODEL =====
+<class 'peft.peft_model.PeftModelForFeatureExtraction'>
+
+===== TRAINABLE PARAMETERS =====
+trainable params: 0 || all params: 33,022,474,688 || trainable%: 0.0000
+
+===== SUCCESS =====

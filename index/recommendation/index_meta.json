@@ -1,0 +1,36 @@
+{
+  "index_type": "FAISS-IndexFlatIP",
+  "embedding_model": "nvidia/llama-nemotron-embed-vl-1b-v2",
+  "embedding_dimension": 2048,
+  "pooling": "avg",
+  "normalize": true,
+  "chunk_size": 1000,
+  "chunk_overlap": 150,
+  "record_count": 30,
+  "raw_record_count": 40,
+  "accepted_record_count": 30,
+  "rejected_record_count": 10,
+  "chunk_count": 32,
+  "cleanup": {
+    "accepted": 30,
+    "rejected": 10,
+    "duplicate_count": 0,
+    "boilerplate_count": 0,
+    "empty_count": 0,
+    "short_count": 0,
+    "rejected_records_file": "/workspace/index/recommendation/rejected_records.jsonl"
+  },
+  "source_counts": {
+    "mock_agricultural_guidance": 6,
+    "web": 24
+  },
+  "source_types": [
+    "mock_agricultural_guidance",
+    "web"
+  ],
+  "files": {
+    "faiss": "/workspace/index/recommendation/faiss.index",
+    "chunks": "/workspace/index/recommendation/chunks.jsonl",
+    "rejected_records": "/workspace/index/recommendation/rejected_records.jsonl"
+  }
+}

@@ -1,0 +1,176 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+===== LOADING BASE MODEL =====
+[ERROR] `cache_position` is part of NemotronHForCausalLM.forward's signature, but not documented. Make sure to add it to the docstring of the function in /workspace/hf_cache/modules/transformers_modules/e5e9932441de940c9a62185c870ea5bcd4cd24e2/d6489b65e6888d3f/modeling_nemotron_h.py.
+Loading weights:   0%|          | 0/7345 [00:00<?, ?it/s]Loading weights:   8%|▊         | 576/7345 [00:00<00:01, 5755.93it/s]Loading weights:  16%|█▌        | 1186/7345 [00:00<00:01, 5956.99it/s]Loading weights:  25%|██▍       | 1808/7345 [00:00<00:00, 6070.67it/s]Loading weights:  34%|███▍      | 2505/7345 [00:00<00:00, 6421.25it/s]Loading weights:  65%|██████▌   | 4804/7345 [00:00<00:00, 12389.80it/s]Loading weights: 100%|██████████| 7345/7345 [00:00<00:00, 12951.38it/s]
+[transformers] [1mNemotronH_Nano_Omni_Reasoning_V3 LOAD REPORT[0m from: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+Key                                                       | Status     | 
+----------------------------------------------------------+------------+-
+vision_model.radio_model.input_conditioner.norm_mean      | UNEXPECTED | 
+vision_model.radio_model.input_conditioner.norm_std       | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.fb     | UNEXPECTED | 
+sound_encoder.encoder.feature_extractor.featurizer.window | UNEXPECTED | 
+vision_model.radio_model.summary_idxs                     | MISSING    | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
+Base model loaded
+
+===== ACTUAL BASE MODEL TARGET MODULES =====
+language_model.backbone.layers.0.mixer.in_proj
+language_model.backbone.layers.0.mixer.out_proj
+language_model.backbone.layers.1.mixer.shared_experts.up_proj
+language_model.backbone.layers.1.mixer.shared_experts.down_proj
+language_model.backbone.layers.2.mixer.in_proj
+language_model.backbone.layers.2.mixer.out_proj
+language_model.backbone.layers.3.mixer.shared_experts.up_proj
+language_model.backbone.layers.3.mixer.shared_experts.down_proj
+language_model.backbone.layers.4.mixer.in_proj
+language_model.backbone.layers.4.mixer.out_proj
+language_model.backbone.layers.5.mixer.q_proj
+language_model.backbone.layers.5.mixer.k_proj
+language_model.backbone.layers.5.mixer.v_proj
+language_model.backbone.layers.5.mixer.o_proj
+language_model.backbone.layers.6.mixer.shared_experts.up_proj
+language_model.backbone.layers.6.mixer.shared_experts.down_proj
+language_model.backbone.layers.7.mixer.in_proj
+language_model.backbone.layers.7.mixer.out_proj
+language_model.backbone.layers.8.mixer.shared_experts.up_proj
+language_model.backbone.layers.8.mixer.shared_experts.down_proj
+language_model.backbone.layers.9.mixer.in_proj
+language_model.backbone.layers.9.mixer.out_proj
+language_model.backbone.layers.10.mixer.shared_experts.up_proj
+language_model.backbone.layers.10.mixer.shared_experts.down_proj
+language_model.backbone.layers.11.mixer.in_proj
+language_model.backbone.layers.11.mixer.out_proj
+language_model.backbone.layers.12.mixer.q_proj
+language_model.backbone.layers.12.mixer.k_proj
+language_model.backbone.layers.12.mixer.v_proj
+language_model.backbone.layers.12.mixer.o_proj
+language_model.backbone.layers.13.mixer.shared_experts.up_proj
+language_model.backbone.layers.13.mixer.shared_experts.down_proj
+language_model.backbone.layers.14.mixer.in_proj
+language_model.backbone.layers.14.mixer.out_proj
+language_model.backbone.layers.15.mixer.shared_experts.up_proj
+language_model.backbone.layers.15.mixer.shared_experts.down_proj
+language_model.backbone.layers.16.mixer.in_proj
+language_model.backbone.layers.16.mixer.out_proj
+language_model.backbone.layers.17.mixer.shared_experts.up_proj
+language_model.backbone.layers.17.mixer.shared_experts.down_proj
+language_model.backbone.layers.18.mixer.in_proj
+language_model.backbone.layers.18.mixer.out_proj
+language_model.backbone.layers.19.mixer.q_proj
+language_model.backbone.layers.19.mixer.k_proj
+language_model.backbone.layers.19.mixer.v_proj
+language_model.backbone.layers.19.mixer.o_proj
+language_model.backbone.layers.20.mixer.shared_experts.up_proj
+language_model.backbone.layers.20.mixer.shared_experts.down_proj
+language_model.backbone.layers.21.mixer.in_proj
+language_model.backbone.layers.21.mixer.out_proj
+language_model.backbone.layers.22.mixer.shared_experts.up_proj
+language_model.backbone.layers.22.mixer.shared_experts.down_proj
+language_model.backbone.layers.23.mixer.in_proj
+language_model.backbone.layers.23.mixer.out_proj
+language_model.backbone.layers.24.mixer.shared_experts.up_proj
+language_model.backbone.layers.24.mixer.shared_experts.down_proj
+language_model.backbone.layers.25.mixer.in_proj
+language_model.backbone.layers.25.mixer.out_proj
+language_model.backbone.layers.26.mixer.q_proj
+language_model.backbone.layers.26.mixer.k_proj
+language_model.backbone.layers.26.mixer.v_proj
+language_model.backbone.layers.26.mixer.o_proj
+language_model.backbone.layers.27.mixer.shared_experts.up_proj
+language_model.backbone.layers.27.mixer.shared_experts.down_proj
+language_model.backbone.layers.28.mixer.in_proj
+language_model.backbone.layers.28.mixer.out_proj
+language_model.backbone.layers.29.mixer.shared_experts.up_proj
+language_model.backbone.layers.29.mixer.shared_experts.down_proj
+language_model.backbone.layers.30.mixer.in_proj
+language_model.backbone.layers.30.mixer.out_proj
+language_model.backbone.layers.31.mixer.shared_experts.up_proj
+language_model.backbone.layers.31.mixer.shared_experts.down_proj
+language_model.backbone.layers.32.mixer.in_proj
+language_model.backbone.layers.32.mixer.out_proj
+language_model.backbone.layers.33.mixer.q_proj
+language_model.backbone.layers.33.mixer.k_proj
+language_model.backbone.layers.33.mixer.v_proj
+language_model.backbone.layers.33.mixer.o_proj
+language_model.backbone.layers.34.mixer.shared_experts.up_proj
+language_model.backbone.layers.34.mixer.shared_experts.down_proj
+language_model.backbone.layers.35.mixer.in_proj
+language_model.backbone.layers.35.mixer.out_proj
+language_model.backbone.layers.36.mixer.shared_experts.up_proj
+language_model.backbone.layers.36.mixer.shared_experts.down_proj
+language_model.backbone.layers.37.mixer.in_proj
+language_model.backbone.layers.37.mixer.out_proj
+language_model.backbone.layers.38.mixer.shared_experts.up_proj
+language_model.backbone.layers.38.mixer.shared_experts.down_proj
+language_model.backbone.layers.39.mixer.in_proj
+language_model.backbone.layers.39.mixer.out_proj
+language_model.backbone.layers.40.mixer.shared_experts.up_proj
+language_model.backbone.layers.40.mixer.shared_experts.down_proj
+language_model.backbone.layers.41.mixer.in_proj
+language_model.backbone.layers.41.mixer.out_proj
+language_model.backbone.layers.42.mixer.q_proj
+language_model.backbone.layers.42.mixer.k_proj
+language_model.backbone.layers.42.mixer.v_proj
+language_model.backbone.layers.42.mixer.o_proj
+language_model.backbone.layers.43.mixer.shared_experts.up_proj
+language_model.backbone.layers.43.mixer.shared_experts.down_proj
+language_model.backbone.layers.44.mixer.in_proj
+language_model.backbone.layers.44.mixer.out_proj
+language_model.backbone.layers.45.mixer.shared_experts.up_proj
+language_model.backbone.layers.45.mixer.shared_experts.down_proj
+language_model.backbone.layers.46.mixer.in_proj
+language_model.backbone.layers.46.mixer.out_proj
+language_model.backbone.layers.47.mixer.shared_experts.up_proj
+language_model.backbone.layers.47.mixer.shared_experts.down_proj
+language_model.backbone.layers.48.mixer.in_proj
+language_model.backbone.layers.48.mixer.out_proj
+language_model.backbone.layers.49.mixer.shared_experts.up_proj
+language_model.backbone.layers.49.mixer.shared_experts.down_proj
+language_model.backbone.layers.50.mixer.in_proj
+language_model.backbone.layers.50.mixer.out_proj
+language_model.backbone.layers.51.mixer.shared_experts.up_proj
+language_model.backbone.layers.51.mixer.shared_experts.down_proj
+
+Total candidate target modules: 116
+
+===== LORA KEYS =====
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_B.weight
+
+Total LoRA tensors: 232
+
+===== PATH COMPARISON =====
+LoRA keys using language_model.model.layers: 232
+LoRA keys using language_model.backbone.layers: 0

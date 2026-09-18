@@ -1,0 +1,125 @@
+===== ADAPTER FILES =====
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/adapter_model.safetensors 13890928
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/evs.py 2917
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/tokenizer_config.json 582
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/processing_utils.py 3018
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/configuration.py 4872
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/adapter_config.json 7069
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/modeling_nemotron_h.py 64337
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/processing.py 26284
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/processor_config.json 1134
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/automodel_peft_config.json 434
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/video_processing.py 6530
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/image_processing.py 10883
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/tokenizer.json 17077366
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/modeling.py 28713
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/video_io.py 6523
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/configuration_radio.py 8982
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/chat_template.jinja 14277
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/audio_model.py 6888
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/configuration_nemotron_h.py 13971
+
+===== SAFETENSOR KEYS =====
+
+FILE: /workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/adapter_model.safetensors
+Number of keys: 232
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.14.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.14.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.16.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.16.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.16.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.16.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.17.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.17.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.17.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.17.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.18.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.18.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.18.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.18.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.19.mixer.k_proj.lora_A.weight
+base_model.model.language_model.model.layers.19.mixer.k_proj.lora_B.weight
+base_model.model.language_model.model.layers.19.mixer.o_proj.lora_A.weight
+base_model.model.language_model.model.layers.19.mixer.o_proj.lora_B.weight
+base_model.model.language_model.model.layers.19.mixer.q_proj.lora_A.weight
+base_model.model.language_model.model.layers.19.mixer.q_proj.lora_B.weight
+base_model.model.language_model.model.layers.19.mixer.v_proj.lora_A.weight
+base_model.model.language_model.model.layers.19.mixer.v_proj.lora_B.weight
+base_model.model.language_model.model.layers.2.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.2.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.2.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.2.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.20.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.20.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.20.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.20.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.21.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.21.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.21.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.21.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.22.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.22.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.22.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.22.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.23.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.23.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.23.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.23.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.24.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.24.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.24.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.24.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.25.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.25.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.25.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.25.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.26.mixer.k_proj.lora_A.weight
+base_model.model.language_model.model.layers.26.mixer.k_proj.lora_B.weight
+base_model.model.language_model.model.layers.26.mixer.o_proj.lora_A.weight
+base_model.model.language_model.model.layers.26.mixer.o_proj.lora_B.weight
+base_model.model.language_model.model.layers.26.mixer.q_proj.lora_A.weight
+base_model.model.language_model.model.layers.26.mixer.q_proj.lora_B.weight
+base_model.model.language_model.model.layers.26.mixer.v_proj.lora_A.weight
+base_model.model.language_model.model.layers.26.mixer.v_proj.lora_B.weight
+base_model.model.language_model.model.layers.27.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.27.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.27.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.27.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.28.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.28.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.28.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.28.mixer.out_proj.lora_B.weight

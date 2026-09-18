@@ -1,0 +1,430 @@
+import os
+import time
+import json
+import torch
+from pathlib import Path
+from PIL import Image
+
+from transformers import AutoProcessor, AutoModel
+from peft import PeftModel
+
+
+# ============================================================
+# PATHS
+# ============================================================
+
+MODEL_DIR = (
+    "/workspace/hf_cache/hub/models--nvidia--"
+    "Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/"
+    "snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2"
+)
+
+LORA_DIR = (
+    "/workspace/outputs/lora/"
+    "cropguard_nemotron_lora_full_2gpu/"
+    "epoch_1_step_26459/model_remapped"
+)
+
+IMAGE_DIR = "/workspace/cropguard_eval_images"
+
+RESULT_FILE = "/workspace/cropguard_evaluation_result.json"
+
+
+# ============================================================
+# FIND ONE IMAGE
+# ============================================================
+
+image_files = []
+
+for ext in ("*.jpg", "*.jpeg", "*.png", "*.JPG", "*.JPEG", "*.PNG"):
+    image_files.extend(Path(IMAGE_DIR).glob(ext))
+
+if not image_files:
+    raise FileNotFoundError(
+        f"No image found in {IMAGE_DIR}"
+    )
+
+IMAGE_PATH = str(image_files[0])
+
+print("=" * 70)
+print("CROPGUARD SINGLE IMAGE EVALUATION")
+print("=" * 70)
+
+print(f"Image : {IMAGE_PATH}")
+print(f"LoRA  : {LORA_DIR}")
+print()
+
+
+# ============================================================
+# LOAD PROCESSOR
+# ============================================================
+
+print("===== STEP 1: LOAD PROCESSOR =====")
+
+processor = AutoProcessor.from_pretrained(
+    MODEL_DIR,
+    trust_remote_code=True
+)
+
+print("PROCESSOR: OK")
+print()
+
+
+# ============================================================
+# LOAD BASE MODEL
+# ============================================================
+
+print("===== STEP 2: LOAD BASE MODEL =====")
+
+start_load = time.time()
+
+base_model = AutoModel.from_pretrained(
+    MODEL_DIR,
+    trust_remote_code=True,
+    torch_dtype=torch.bfloat16,
+    device_map="auto"
+)
+
+base_load_time = time.time() - start_load
+
+print("BASE MODEL: OK")
+print(f"Load time: {base_load_time:.2f} seconds")
+print()
+
+
+# ============================================================
+# LOAD REMAPPED LORA
+# ============================================================
+
+print("===== STEP 3: LOAD REMAPPED LORA =====")
+
+model = PeftModel.from_pretrained(
+    base_model,
+    LORA_DIR,
+    is_trainable=False
+)
+
+model.eval()
+
+print("REMAPPED LORA: OK")
+print("Active adapters:", model.active_adapters)
+print()
+
+
+# ============================================================
+# CHECK LORA MODULES
+# ============================================================
+
+print("===== STEP 4: CHECK LORA =====")
+
+lora_modules = []
+
+for name, module in model.named_modules():
+
+    if hasattr(module, "lora_A") and hasattr(module, "lora_B"):
+        lora_modules.append(name)
+
+print("LoRA modules found:", len(lora_modules))
+
+if len(lora_modules) != 116:
+    raise RuntimeError(
+        f"Expected 116 LoRA modules, found {len(lora_modules)}"
+    )
+
+print("116 LoRA modules: OK")
+print()
+
+
+# ============================================================
+# LOAD IMAGE
+# ============================================================
+
+print("===== STEP 5: LOAD IMAGE =====")
+
+image = Image.open(IMAGE_PATH).convert("RGB")
+
+print(
+    f"Image size: {image.width} x {image.height}"
+)
+
+print("IMAGE: OK")
+print()
+
+
+# ============================================================
+# PROMPT
+# ============================================================
+
+prompt = """
+You are CropGuard, an AI assistant for crop disease detection
+and agricultural advisory.
+
+Analyze the provided crop leaf image.
+
+Provide:
+
+1. Crop name
+2. Most likely disease
+3. Visible symptoms
+4. Possible alternative causes
+5. Recommended immediate action
+6. Preventive measures
+7. Whether the farmer should provide another image
+8. Confidence level
+
+Give a concise agricultural recommendation.
+"""
+
+
+# ============================================================
+# PREPARE INPUT
+# ============================================================
+
+print("===== STEP 6: PREPARE INPUT =====")
+
+inputs = processor(
+    text=prompt,
+    images=image,
+    return_tensors="pt"
+)
+
+# Move tensors to model device where appropriate
+for key, value in inputs.items():
+
+    if torch.is_tensor(value):
+
+        if value.dtype.is_floating_point:
+            inputs[key] = value.to(
+                device="cuda:0",
+                dtype=torch.bfloat16
+            )
+        else:
+            inputs[key] = value.to("cuda:0")
+
+print("INPUTS: OK")
+print()
+
+
+# ============================================================
+# GENERATION
+# ============================================================
+
+print("===== STEP 7: GENERATE =====")
+print()
+print("Generating response...")
+print()
+
+start_inference = time.time()
+
+with torch.inference_mode():
+
+    output_ids = model.generate(
+        **inputs,
+        max_new_tokens=512,
+        do_sample=False
+    )
+
+inference_time = time.time() - start_inference
+
+print("Generation completed.")
+print(f"Inference time: {inference_time:.2f} seconds")
+print()
+
+
+# ============================================================
+# DECODE
+# ============================================================
+
+print("===== STEP 8: DECODE RESPONSE =====")
+
+input_length = inputs["input_ids"].shape[1]
+
+generated_tokens = output_ids[:, input_length:]
+
+response = processor.batch_decode(
+    generated_tokens,
+    skip_special_tokens=True
+)[0]
+
+response = response.strip()
+
+print()
+print("=" * 70)
+print("CROPGUARD RESPONSE")
+print("=" * 70)
+print()
+print(response)
+print()
+print("=" * 70)
+
+
+# ============================================================
+# BASIC AUTOMATED EVALUATION
+# ============================================================
+
+print()
+print("===== STEP 9: EVALUATION PARAMETERS =====")
+
+response_lower = response.lower()
+
+parameters = {}
+
+parameters["response_generated"] = len(response) > 20
+
+parameters["crop_identified"] = any(
+    word in response_lower
+    for word in [
+        "crop",
+        "tomato",
+        "potato",
+        "apple",
+        "grape",
+        "rice",
+        "pepper",
+        "corn",
+        "maize"
+    ]
+)
+
+parameters["disease_identified"] = any(
+    word in response_lower
+    for word in [
+        "disease",
+        "blight",
+        "spot",
+        "rust",
+        "mildew",
+        "mosaic",
+        "virus",
+        "bacterial",
+        "fungal",
+        "healthy"
+    ]
+)
+
+parameters["symptoms_present"] = any(
+    word in response_lower
+    for word in [
+        "spot",
+        "yellow",
+        "yellowing",
+        "lesion",
+        "leaf",
+        "discoloration",
+        "symptom"
+    ]
+)
+
+parameters["action_recommended"] = any(
+    word in response_lower
+    for word in [
+        "remove",
+        "treat",
+        "fungicide",
+        "bactericide",
+        "spray",
+        "apply",
+        "isolate",
+        "prune",
+        "action"
+    ]
+)
+
+parameters["prevention_present"] = any(
+    word in response_lower
+    for word in [
+        "prevent",
+        "prevention",
+        "monitor",
+        "rotate",
+        "sanitation",
+        "mulch",
+        "avoid",
+        "spacing"
+    ]
+)
+
+parameters["image_followup"] = any(
+    word in response_lower
+    for word in [
+        "image",
+        "photo",
+        "picture",
+        "leaf image"
+    ]
+)
+
+parameters["confidence_present"] = any(
+    word in response_lower
+    for word in [
+        "confidence",
+        "certain",
+        "likely",
+        "possible",
+        "%"
+    ]
+)
+
+passed = sum(parameters.values())
+total = len(parameters)
+
+score = (passed / total) * 100
+
+
+# ============================================================
+# PRINT SCORE
+# ============================================================
+
+print()
+
+for key, value in parameters.items():
+
+    status = "PASS" if value else "FAIL"
+
+    print(
+        f"{key:25s}: {status}"
+    )
+
+print()
+print(
+    f"Automated coverage score: "
+    f"{score:.1f}% ({passed}/{total})"
+)
+
+print()
+
+
+# ============================================================
+# SAVE RESULTS
+# ============================================================
+
+result = {
+    "image": IMAGE_PATH,
+    "lora_modules": len(lora_modules),
+    "base_model_load_seconds": round(base_load_time, 2),
+    "inference_seconds": round(inference_time, 2),
+    "evaluation_parameters": parameters,
+    "automated_coverage_score": round(score, 2),
+    "response": response
+}
+
+with open(
+    RESULT_FILE,
+    "w",
+    encoding="utf-8"
+) as f:
+
+    json.dump(
+        result,
+        f,
+        indent=2,
+        ensure_ascii=False
+    )
+
+print("=" * 70)
+print("EVALUATION COMPLETE")
+print("=" * 70)
+print()
+print(f"Result saved to:")
+print(RESULT_FILE)
+print()

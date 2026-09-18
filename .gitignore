@@ -1,0 +1,104 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Secrets / environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+credentials/
+
+# Hugging Face / model cache
+hf_cache/
+huggingface/
+.cache/
+**/hf_cache/
+**/.cache/
+
+# Model checkpoints / large model artifacts
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.gguf
+checkpoints/
+outputs/
+models/
+
+# Training / evaluation generated artifacts
+*.csv
+*.jsonl
+results/
+evaluation_results/
+runs/
+wandb/
+mlruns/
+
+# Datasets / images
+data/raw/
+data/processed/
+datasets/
+images/
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.tif
+*.tiff
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Apptainer / containers
+*.sif
+*.img
+*.sqsh
+
+# Generated presentation / output files
+*.pptx
+*.pdf
+
+# Large CropGuard artifacts
+nemo-automodel.sif
+data/sft/train.jsonl
+
+# Large generated / backup artifacts
+backup/
+index/diagnosis_bm25/
+index/diagnosis_vector/
+
+# Model/checkpoint artifacts
+*.tar.gz
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+*.bin
+

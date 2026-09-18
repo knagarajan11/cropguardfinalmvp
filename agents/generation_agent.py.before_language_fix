@@ -1,0 +1,283 @@
+"""CropGuard Grounded Generation Agent.
+
+Generates farmer-facing agricultural guidance ONLY from evidence that has
+already passed the Knowledge Agent's Evidence Filter.
+
+The underlying Nemotron Omni + CropGuard LoRA model remains frozen and is
+reused through the validated vision.nemotron_omni adapter.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Optional
+
+from PIL import Image
+
+from agents.knowledge_agent import KnowledgeAgentResult
+from vision.nemotron_omni import (
+    NemotronGeneration,
+    NemotronOmniVisionModel,
+)
+
+
+@dataclass(frozen=True)
+class GroundedGenerationResult:
+    """Structured result from grounded generation."""
+
+    status: str
+    answer: str
+
+    query: str
+    crop: Optional[str]
+    disease: Optional[str]
+    recommendation_preference: str
+
+    evidence_count: int
+
+    traceability: list[dict]
+
+    raw_text: str = ""
+    generated_token_count: int = 0
+    truncated: bool = False
+    inference_time_seconds: float = 0.0
+
+    model_called: bool = False
+
+    @property
+    def abstain(self) -> bool:
+        return self.status != "SUFFICIENT"
+
+
+class GroundedGenerationAgent:
+    """Generate grounded CropGuard recommendations.
+
+    Safety boundary:
+
+        KnowledgeAgentResult
+            ->
+        Evidence Filter
+            ->
+        accepted_evidence ONLY
+            ->
+        grounded prompt
+            ->
+        frozen Nemotron Omni + LoRA
+
+    Rejected or unfiltered evidence is never passed to the model.
+    """
+
+    SYSTEM_GROUNDING_RULE = """
+You are CropGuard, an agricultural advisory assistant.
+
+You must answer using ONLY the evidence supplied below.
+
+STRICT GROUNDING RULES:
+1. Do not invent facts, treatments, pesticides, fungicides, dosages,
+   application rates, intervals, or safety instructions.
+2. Do not use information from your pretrained knowledge when the supplied
+   evidence does not support the requested recommendation.
+3. Do not substitute General or IPM evidence when the requested preference
+   is Organic.
+4. Do not claim that SampleMVP/development evidence is authoritative.
+5. If the supplied evidence does not support a requested recommendation,
+   clearly say that sufficient evidence is not available.
+6. Keep the response relevant to the diagnosed crop and disease.
+7. Distinguish evidence-supported information from uncertainty.
+8. Do not fabricate citations or sources.
+"""
+
+    ABSTENTION_MESSAGE = (
+        "CropGuard could not find sufficiently relevant evidence to provide "
+        "a reliable recommendation for this request. No unsupported "
+        "treatment recommendation will be provided."
+    )
+
+    def __init__(
+        self,
+        model: NemotronOmniVisionModel,
+    ) -> None:
+        self.model = model
+
+    def generate(
+        self,
+        *,
+        image: Image.Image,
+        knowledge_result: KnowledgeAgentResult,
+        farmer_query: str,
+        max_new_tokens: int | None = None,
+    ) -> GroundedGenerationResult:
+        """Generate a response using only filtered evidence."""
+
+        if not isinstance(image, Image.Image):
+            raise TypeError(
+                "image must be a PIL.Image.Image instance."
+            )
+
+        if not isinstance(
+            knowledge_result,
+            KnowledgeAgentResult,
+        ):
+            raise TypeError(
+                "knowledge_result must be a KnowledgeAgentResult."
+            )
+
+        if not farmer_query or not farmer_query.strip():
+            raise ValueError(
+                "farmer_query must not be empty."
+            )
+
+        # ---------------------------------------------------------
+        # SAFETY GATE
+        #
+        # Never call the model when evidence is insufficient or
+        # conflicting.
+        # ---------------------------------------------------------
+
+        if not knowledge_result.sufficient:
+            return GroundedGenerationResult(
+                status=knowledge_result.status,
+                answer=self.ABSTENTION_MESSAGE,
+                query=farmer_query.strip(),
+                crop=knowledge_result.crop,
+                disease=knowledge_result.disease,
+                recommendation_preference=(
+                    knowledge_result.recommendation_preference
+                ),
+                evidence_count=0,
+                traceability=[],
+                model_called=False,
+            )
+
+        accepted = list(
+            knowledge_result.accepted_evidence
+        )
+
+        if not accepted:
+            return GroundedGenerationResult(
+                status="INSUFFICIENT",
+                answer=self.ABSTENTION_MESSAGE,
+                query=farmer_query.strip(),
+                crop=knowledge_result.crop,
+                disease=knowledge_result.disease,
+                recommendation_preference=(
+                    knowledge_result.recommendation_preference
+                ),
+                evidence_count=0,
+                traceability=[],
+                model_called=False,
+            )
+
+        # ---------------------------------------------------------
+        # Build prompt ONLY from accepted evidence.
+        # ---------------------------------------------------------
+
+        evidence_blocks: list[str] = []
+
+        for index, item in enumerate(
+            accepted,
+            start=1,
+        ):
+            metadata = item.metadata
+
+            source = metadata.get(
+                "source",
+                "Unknown",
+            )
+
+            evidence_blocks.append(
+                f"""
+[EVIDENCE {index}]
+knowledge_id: {item.knowledge_id}
+chunk_id: {item.chunk_id}
+source: {source}
+crop: {metadata.get("crop", "")}
+disease: {metadata.get("disease", "")}
+evidence_type: {metadata.get("evidence_type", "")}
+recommendation_preference: {
+    metadata.get("recommendation_preference", "")
+}
+reranker_relevance_score: {
+    item.reranker_score
+}
+content:
+{item.content}
+[/EVIDENCE {index}]
+""".strip()
+            )
+
+        evidence_text = "\n\n".join(
+            evidence_blocks
+        )
+
+        prompt = f"""
+{self.SYSTEM_GROUNDING_RULE}
+
+CURRENT CROP:
+{knowledge_result.crop or "Not specified"}
+
+CURRENT DISEASE:
+{knowledge_result.disease or "Not specified"}
+
+REQUESTED RECOMMENDATION PREFERENCE:
+{knowledge_result.recommendation_preference}
+
+FARMER QUESTION:
+{farmer_query.strip()}
+
+FILTERED EVIDENCE:
+{evidence_text}
+
+TASK:
+Provide a concise, farmer-friendly response to the farmer's question.
+
+Use only the filtered evidence above.
+
+If the evidence supports a recommendation, explain the supported practice
+clearly and conservatively.
+
+If the evidence does not provide enough detail for something requested by
+the farmer, explicitly state that the available evidence does not establish
+that detail.
+
+Do not add unsupported dosage, pesticide, fungicide, chemical, application
+rate, interval, or safety information.
+
+Do not mention evidence that is not included in the FILTERED EVIDENCE.
+""".strip()
+
+        # ---------------------------------------------------------
+        # Reuse the validated frozen Omni + LoRA adapter.
+        # ---------------------------------------------------------
+
+        generation: NemotronGeneration = self.model.diagnose(
+            image=image,
+            prompt=prompt,
+            max_new_tokens=max_new_tokens,
+        )
+
+        traceability = (
+            knowledge_result.traceability()
+        )
+
+        return GroundedGenerationResult(
+            status="SUFFICIENT",
+            answer=generation.final_text.strip(),
+            query=farmer_query.strip(),
+            crop=knowledge_result.crop,
+            disease=knowledge_result.disease,
+            recommendation_preference=(
+                knowledge_result.recommendation_preference
+            ),
+            evidence_count=len(accepted),
+            traceability=traceability,
+            raw_text=generation.raw_text,
+            generated_token_count=(
+                generation.generated_token_count
+            ),
+            truncated=generation.truncated,
+            inference_time_seconds=(
+                generation.inference_time_seconds
+            ),
+            model_called=True,
+        )

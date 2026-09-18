@@ -1,0 +1,1024 @@
+import os
+import re
+import time
+import csv
+import traceback
+import gc
+from pathlib import Path
+
+import torch
+import numpy as np
+
+from PIL import Image
+from transformers import AutoProcessor, AutoModelForCausalLM
+from peft import PeftModel
+
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+    classification_report,
+)
+
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+MODEL_PATH = (
+    "/workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-"
+    "Reasoning-BF16/snapshots/"
+    "e5e9932441de940c9a62185c870ea5bcd4cd24e2"
+)
+
+LORA_PATH = (
+    "/workspace/outputs/lora/"
+    "cropguard_nemotron_lora_full_2gpu/"
+    "epoch_1_step_26459/model_remapped"
+)
+
+# May contain images directly or PlantVillage-style class subfolders --
+# searched recursively either way.
+IMAGE_DIR = "/workspace/cropguard_eval_images"
+
+RESULTS_CSV = "/workspace/cropguard_base_vs_lora_results.csv"
+
+DEVICE = "cuda:0"
+
+# Reasoning models need room for a scratchpad AND the structured answer.
+# See the truncation handling below -- if a response comes back marked
+# truncated, this is the first thing to raise.
+MAX_NEW_TOKENS = 256
+
+EXPECTED_LORA_MODULES = 116
+
+REASONING_END_MARKERS = ["</think>", "</thinking>", "final answer:"]
+
+
+# ============================================================
+# HEADER
+# ============================================================
+
+print()
+print("=" * 80)
+print("       CROPGUARD BASE-MODEL vs BASE+LoRA COMPARISON EVALUATION")
+print("=" * 80)
+print()
+
+print("Model      :", MODEL_PATH)
+print("LoRA       :", LORA_PATH)
+print("Image dir  :", IMAGE_DIR, "(searched recursively)")
+print("Device     :", DEVICE)
+print("Max tokens :", MAX_NEW_TOKENS)
+print()
+
+print(
+    "Both the base model and the base+LoRA model are run on the exact "
+    "same processed inputs (same image, same prompt, same generation "
+    "settings) for each image, so any difference in output is "
+    "attributable to the adapter, not to input variance."
+)
+print()
+
+
+# ============================================================
+# CHECK PATHS
+# ============================================================
+
+if not os.path.isdir(MODEL_PATH):
+    raise FileNotFoundError(f"Base model directory not found:\n{MODEL_PATH}")
+
+if not os.path.isdir(LORA_PATH):
+    raise FileNotFoundError(f"LoRA directory not found:\n{LORA_PATH}")
+
+if not os.path.isdir(IMAGE_DIR):
+    raise FileNotFoundError(f"Evaluation image directory not found:\n{IMAGE_DIR}")
+
+
+# ============================================================
+# STEP 1: FIND IMAGES (RECURSIVE)
+# ============================================================
+
+print("=" * 80)
+print("STEP 1: FIND EVALUATION IMAGES (RECURSIVE)")
+print("=" * 80)
+print()
+
+image_extensions = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"}
+
+all_images = sorted(
+    p for p in Path(IMAGE_DIR).rglob("*")
+    if p.is_file() and p.suffix in image_extensions
+)
+
+print("Images found:", len(all_images))
+
+for i, image_path in enumerate(all_images, start=1):
+    try:
+        rel = image_path.relative_to(IMAGE_DIR)
+    except ValueError:
+        rel = image_path
+    print(f"{i}. {rel}")
+
+print()
+
+
+# ============================================================
+# GROUND TRUTH
+# ============================================================
+#
+# Two supported layouts:
+#   1. PlantVillage-style class folders (Tomato___Early_blight/*.jpg) --
+#      ground truth taken from the nearest ancestor folder name.
+#   2. Flat directory with descriptive filenames (tomato_early_blight_1.jpg)
+#      -- ground truth taken from the filename as a fallback.
+
+def _match_label(text):
+    text = text.lower().replace("-", "_")
+    text = re.sub(r"[^a-z0-9_]+", "_", text)
+
+    if "healthy" in text:
+        return "healthy"
+    if "early_blight" in text:
+        return "early blight"
+    if "late_blight" in text:
+        return "late blight"
+    return None
+
+
+def get_ground_truth(image_path: Path, image_dir: Path):
+    current = image_path.parent
+    image_dir = image_dir.resolve()
+
+    while True:
+        current_resolved = current.resolve()
+        label = _match_label(current.name)
+        if label is not None:
+            return label
+        if current_resolved == image_dir or current.parent == current:
+            break
+        current = current.parent
+
+    return _match_label(image_path.stem)
+
+
+# ============================================================
+# STEP 2: BUILD EVALUATION DATASET
+# ============================================================
+
+print("=" * 80)
+print("STEP 2: BUILD EVALUATION DATASET")
+print("=" * 80)
+print()
+
+evaluation_images = []
+skipped_images = []
+
+for image_path in all_images:
+
+    ground_truth = get_ground_truth(image_path, Path(IMAGE_DIR))
+
+    try:
+        rel = image_path.relative_to(IMAGE_DIR)
+    except ValueError:
+        rel = image_path
+
+    if ground_truth is None:
+        skipped_images.append((str(rel), "Ground truth not identifiable from folder or filename"))
+        print(f"SKIP: {rel} (ground truth not identifiable)")
+        continue
+
+    evaluation_images.append(
+        {
+            "path": str(image_path),
+            "filename": str(rel),
+            "ground_truth": ground_truth,
+        }
+    )
+
+    print(f"USE : {str(rel):50s} Ground truth = {ground_truth}")
+
+print()
+print("Images selected for evaluation:", len(evaluation_images))
+print("Images skipped:", len(skipped_images))
+print()
+
+if len(evaluation_images) == 0:
+    raise RuntimeError("No labelled evaluation images found.")
+
+
+# ============================================================
+# STEP 3: LOAD PROCESSOR
+# ============================================================
+
+print("=" * 80)
+print("STEP 3: LOAD PROCESSOR")
+print("=" * 80)
+print()
+
+processor_start = time.time()
+
+processor = AutoProcessor.from_pretrained(MODEL_PATH, trust_remote_code=True)
+
+print("Processor:", type(processor))
+
+image_token = getattr(processor, "image_token", None)
+image_token_id = getattr(processor, "image_token_id", None)
+
+print("Image token:", image_token)
+print("Image token ID:", image_token_id)
+
+print()
+print(f"Processor loaded in {time.time() - processor_start:.2f} seconds")
+print()
+
+
+# ============================================================
+# STEP 4: LOAD BASE MODEL
+# ============================================================
+
+print("=" * 80)
+print("STEP 4: LOAD BASE MODEL")
+print("=" * 80)
+print()
+
+base_start = time.time()
+
+base_model = AutoModelForCausalLM.from_pretrained(
+    MODEL_PATH,
+    trust_remote_code=True,
+    dtype=torch.bfloat16,
+    device_map="auto",
+)
+
+print()
+print(f"Base model loaded in {time.time() - base_start:.2f} seconds")
+print("BASE MODEL: OK")
+print()
+
+
+# ============================================================
+# STEP 5: LOAD REMAPPED LORA ON TOP OF THE SAME MODEL
+# ============================================================
+#
+# We load the LoRA adapter onto the same base_model object rather than
+# loading two separate copies of a 30B model into GPU memory. Once
+# wrapped, `model.disable_adapter()` is a context manager that
+# temporarily switches every LoRA-augmented layer back to base-only
+# weights for the duration of the `with` block -- so a single loaded
+# model can produce both a "base" and a "base+LoRA" generation per image.
+
+print("=" * 80)
+print("STEP 5: LOAD REMAPPED LORA (SHARED WEIGHTS)")
+print("=" * 80)
+print()
+
+lora_start = time.time()
+
+model = PeftModel.from_pretrained(base_model, LORA_PATH, is_trainable=False)
+
+print(f"LoRA loaded in {time.time() - lora_start:.2f} seconds")
+print("LORA MODEL: OK")
+print()
+
+print("Active adapters:", getattr(model, "active_adapters", None))
+print()
+
+lora_modules = [
+    name for name, module in model.named_modules()
+    if hasattr(module, "lora_A") and hasattr(module, "lora_B")
+]
+
+print("LoRA modules found:", len(lora_modules))
+
+if len(lora_modules) != EXPECTED_LORA_MODULES:
+    print(f"WARNING: Expected {EXPECTED_LORA_MODULES} LoRA modules but found {len(lora_modules)}")
+else:
+    print(f"{EXPECTED_LORA_MODULES} LoRA modules: OK")
+
+print()
+
+trainable_parameters = 0
+total_parameters = 0
+
+for parameter in model.parameters():
+    total_parameters += parameter.numel()
+    if parameter.requires_grad:
+        trainable_parameters += parameter.numel()
+
+print("Trainable parameters :", trainable_parameters)
+print("Total parameters     :", f"{total_parameters:,}")
+print("Trainable percentage :", f"{100.0 * trainable_parameters / total_parameters:.6f}%")
+
+model.eval()
+
+print("Model evaluation mode: OK")
+print()
+
+
+# ============================================================
+# STEP 6: INSTALL SAFE MULTIMODAL GENERATION PATCH
+# ============================================================
+#
+# The custom NVIDIA multimodal generate() passes multimodal metadata down
+# to the inner language model. The inner HuggingFace generate() rejects:
+#     num_patches, num_tokens, imgs_sizes
+# so we patch the INNER language model's generate() to strip those keys
+# before calling the original method. This patch is installed once and
+# applies identically whether the adapter is enabled or disabled --
+# disable_adapter() only changes which weights are active in the forward
+# pass, not which generate() method gets called, so both the base and
+# base+LoRA generations below go through the same safe path.
+
+print("=" * 80)
+print("STEP 6: INSTALL SAFE MULTIMODAL GENERATION PATCH")
+print("=" * 80)
+print()
+
+try:
+    multimodal_model = model.get_base_model()
+    print("Multimodal model:", type(multimodal_model))
+
+    inner_language_model = multimodal_model.language_model
+    print("Inner language model:", type(inner_language_model))
+
+    original_inner_generate = inner_language_model.generate
+
+    _STRIP_KEYS = ("num_patches", "num_tokens", "imgs_sizes")
+
+    def safe_inner_generate(*args, **kwargs):
+        removed = [k for k in _STRIP_KEYS if k in kwargs]
+        for k in removed:
+            kwargs.pop(k)
+        if removed:
+            print("SAFE GENERATION PATCH: removed inner-model metadata:", removed)
+        return original_inner_generate(*args, **kwargs)
+
+    inner_language_model.generate = safe_inner_generate
+
+    print("Safe generation patch installed.")
+    print("NVIDIA modeling.py remains unchanged.")
+
+except Exception as e:
+    print()
+    print("FAILED TO INSTALL GENERATION PATCH")
+    print(repr(e))
+    raise
+
+print()
+
+
+# ============================================================
+# DISEASE NORMALIZATION
+# ============================================================
+
+def normalize_disease(text):
+    if text is None:
+        return "unknown"
+
+    text = text.lower().strip()
+    text = text.replace("_", " ").replace("-", " ")
+    text = re.sub(r"\s+", " ", text)
+
+    if "late blight" in text:
+        return "late blight"
+    if "early blight" in text:
+        return "early blight"
+    if "healthy" in text:
+        return "healthy"
+    return "unknown"
+
+
+# ============================================================
+# ISOLATE FINAL ANSWER FROM REASONING SCRATCHPAD
+# ============================================================
+
+def isolate_final_answer(response):
+    """
+    Return only the text after the last reasoning-scratchpad delimiter
+    (e.g. "</think>"), which is the model's actual conclusion rather than
+    its intermediate thinking. If no delimiter is found, returns the
+    response unchanged.
+    """
+    response_lower = response.lower()
+
+    last_cut = -1
+    for marker in REASONING_END_MARKERS:
+        idx = response_lower.rfind(marker)
+        if idx != -1:
+            cut_point = idx + len(marker)
+            if cut_point > last_cut:
+                last_cut = cut_point
+
+    if last_cut == -1:
+        return response
+
+    return response[last_cut:].strip()
+
+
+# ============================================================
+# EXTRACT DISEASE FROM MODEL RESPONSE
+# ============================================================
+
+def extract_predicted_disease(response, truncated=False):
+    """
+    Extract the model's stated diagnosis.
+
+    Uses the LAST regex match for a given pattern, not the first, since a
+    reasoning trace may float a tentative guess ("most likely disease:
+    early blight?") before settling on its real conclusion later in the
+    same text.
+
+    If generation was truncated and no explicit "disease: <value>"
+    statement was ever made, returns "incomplete" rather than guessing
+    from a scratchpad, since casual wording there (e.g. "green healthy
+    tissue") can be mistaken for a diagnosis it never gave.
+    """
+    response_lower = response.lower()
+
+    patterns = [
+        r"most likely disease\s*:\s*([^\n\r]+)",
+        r"most likely disease\s*-\s*([^\n\r]+)",
+        r"disease\s*:\s*([^\n\r]+)",
+        r"diagnosis\s*:\s*([^\n\r]+)",
+    ]
+
+    for pattern in patterns:
+        matches = list(re.finditer(pattern, response_lower))
+        for match in reversed(matches):
+            candidate = match.group(1).strip()
+            candidate = candidate.split(".")[0]
+            candidate = candidate.split(",")[0]
+            normalized = normalize_disease(candidate)
+            if normalized != "unknown":
+                return normalized
+
+    # If the explicit diagnosis line is absent, recover the last disease
+    # mentioned in the generated response. This handles truncated reasoning
+    # responses without automatically labeling them as "incomplete".
+    last_match, last_index = None, -1
+    for label, needle in (
+        ("late blight", "late blight"),
+        ("early blight", "early blight"),
+        ("healthy", "healthy"),
+    ):
+        idx = response_lower.rfind(needle)
+        if idx != -1 and idx > last_index:
+            last_index = idx
+            last_match = label
+
+    return last_match if last_match else "unknown"
+
+
+# ============================================================
+# EXTRACT CONFIDENCE FROM MODEL RESPONSE
+# ============================================================
+
+def extract_confidence(response):
+    response_lower = response.lower()
+
+    matches = list(re.finditer(r"confidence(?:\s+level)?\s*:\s*([^\n\r.]+)", response_lower))
+    if matches:
+        candidate = matches[-1].group(1).strip()
+        candidate = candidate.split(",")[0].strip()
+        if candidate:
+            return candidate[:40]
+
+    matches = list(re.finditer(r"(\d{1,3}\s*%)\s*confidence", response_lower))
+    if matches:
+        return matches[-1].group(1).replace(" ", "")
+
+    return "unknown"
+
+
+# ============================================================
+# PROMPT
+# ============================================================
+
+def create_prompt():
+    return """
+You are CropGuard, an AI assistant for crop disease detection.
+
+Analyze the provided crop leaf image and identify the most likely diagnosis.
+
+The possible diagnoses are exactly:
+- early blight
+- late blight
+- healthy
+
+Keep the response concise. State the diagnosis and confidence clearly.
+
+Most likely disease: <early blight | late blight | healthy>
+Confidence level: <low | medium | high>
+"""
+
+
+# ============================================================
+# SINGLE GENERATION HELPER (used for both base and base+LoRA)
+# ============================================================
+
+def run_generation(inputs, label):
+    """
+    Runs model.generate() on already-prepared, already-on-device inputs
+    and returns (response_text, inference_time, truncated, error_text).
+
+    `label` is only used for console messages (e.g. "BASE" or "LoRA") so
+    the two passes are distinguishable in the log.
+    """
+
+    start_inference = time.time()
+
+    try:
+        with torch.inference_mode():
+            output_ids = model.generate(
+                **inputs,
+                max_new_tokens=MAX_NEW_TOKENS,
+                do_sample=False,
+            )
+
+        inference_time = time.time() - start_inference
+
+        input_length = inputs["input_ids"].shape[1]
+        generated_tokens = output_ids[:, input_length:]
+
+        truncated = generated_tokens.shape[1] >= MAX_NEW_TOKENS
+
+        response = processor.batch_decode(
+            generated_tokens,
+            skip_special_tokens=True
+        )[0].strip()
+
+        generated_count = generated_tokens.shape[1]
+
+        # Release generation tensors immediately after decoding.
+        del generated_tokens
+        del output_ids
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+        print(f"[{label}] Generation completed in {inference_time:.2f}s "
+              f"({generated_count} tokens" + (", TRUNCATED" if truncated else "") + ")")
+
+        return response, inference_time, truncated, None
+
+    except Exception as e:
+        inference_time = time.time() - start_inference
+        print(f"[{label}] GENERATION FAILED: {repr(e)}")
+        traceback.print_exc()
+        return "", inference_time, False, repr(e)
+
+
+# ============================================================
+# RESULTS STORAGE
+# ============================================================
+
+results = []
+
+y_true = []
+y_pred_base = []
+y_pred_lora = []
+
+
+# ============================================================
+# STEP 7+: PROCESS EVERY IMAGE -- BASE THEN BASE+LORA
+# ============================================================
+
+for image_number, item in enumerate(evaluation_images, start=1):
+
+    image_path = item["path"]
+    filename = item["filename"]
+    ground_truth = item["ground_truth"]
+
+    print()
+    print()
+    print("=" * 80)
+    print(f"IMAGE {image_number}/{len(evaluation_images)}")
+    print("=" * 80)
+    print()
+    print("File        :", filename)
+    print("Ground truth:", ground_truth)
+    print()
+
+    # --------------------------------------------------------
+    # LOAD IMAGE
+    # --------------------------------------------------------
+
+    print("Loading image...")
+
+    try:
+        image = Image.open(image_path).convert("RGB").copy()
+        print("Image size:", image.size)
+        print("Image mode:", image.mode)
+    except Exception as e:
+        print("IMAGE LOAD FAILED:", repr(e))
+
+        error_row = {
+            "image": filename,
+            "ground_truth": ground_truth,
+            "base_prediction": "error",
+            "base_confidence": "unknown",
+            "base_truncated": False,
+            "base_correct": False,
+            "base_inference_time": 0.0,
+            "base_response": f"IMAGE ERROR: {repr(e)}",
+            "lora_prediction": "error",
+            "lora_confidence": "unknown",
+            "lora_truncated": False,
+            "lora_correct": False,
+            "lora_inference_time": 0.0,
+            "lora_response": f"IMAGE ERROR: {repr(e)}",
+        }
+        results.append(error_row)
+
+        y_true.append(ground_truth)
+        y_pred_base.append("unknown")
+        y_pred_lora.append("unknown")
+        continue
+
+    # --------------------------------------------------------
+    # CHAT TEMPLATE + PROCESSOR (shared by both passes)
+    # --------------------------------------------------------
+
+    print()
+    print("Creating chat template and processing inputs...")
+
+    prompt = create_prompt()
+
+    conversation = [
+        {
+            "role": "system",
+            "content": (
+                "You are CropGuard, an AI assistant for "
+                "crop disease detection and agricultural advisory."
+            ),
+        },
+        {
+            "role": "user",
+            "content": [
+                {"type": "image"},
+                {"type": "text", "text": prompt},
+            ],
+        },
+    ]
+
+    try:
+        chat_text = processor.apply_chat_template(
+            conversation,
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+
+        if image_token is not None and image_token not in chat_text:
+            raise RuntimeError("Chat template does not contain image token.")
+
+        inputs = processor(text=chat_text, images=image, return_tensors="pt")
+
+    except Exception as e:
+        print("CHAT TEMPLATE / PROCESSOR FAILED:", repr(e))
+        raise
+
+    for key, value in inputs.items():
+        if torch.is_tensor(value):
+            if value.dtype.is_floating_point:
+                inputs[key] = value.to(DEVICE, dtype=torch.bfloat16)
+            else:
+                inputs[key] = value.to(DEVICE)
+
+    if "input_ids" not in inputs:
+        raise RuntimeError("input_ids missing from processor output.")
+
+    if image_token_id is not None:
+        image_found = (inputs["input_ids"] == image_token_id).any().item()
+        if not image_found:
+            raise RuntimeError("No image token found in input_ids.")
+
+    print("INPUTS: OK (identical inputs will be used for both passes below)")
+
+    # --------------------------------------------------------
+    # PASS 1: BASE MODEL ONLY (adapter disabled)
+    # --------------------------------------------------------
+
+    print()
+    print("-" * 80)
+    print("PASS 1: BASE MODEL (LoRA disabled)")
+    print("-" * 80)
+
+    with model.disable_adapter():
+        base_response, base_inference_time, base_truncated, base_error = run_generation(inputs, "BASE")
+
+    if base_error is not None:
+        base_predicted_disease = "unknown"
+        base_confidence = "unknown"
+        base_response_stored = f"GENERATION ERROR: {base_error}"
+    else:
+        base_final_text = isolate_final_answer(base_response)
+        base_predicted_disease = extract_predicted_disease(base_final_text, truncated=base_truncated)
+        base_confidence = extract_confidence(base_final_text)
+        base_response_stored = base_response
+
+    base_correct = base_predicted_disease == ground_truth
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    print("BASE prediction :", base_predicted_disease)
+    print("BASE confidence :", base_confidence)
+    print("BASE correct    :", base_correct)
+
+    # --------------------------------------------------------
+    # PASS 2: BASE + LoRA (adapter enabled -- default state)
+    # --------------------------------------------------------
+
+    print()
+    print("-" * 80)
+    print("PASS 2: BASE + LoRA (adapter enabled)")
+    print("-" * 80)
+
+    lora_response, lora_inference_time, lora_truncated, lora_error = run_generation(inputs, "LoRA")
+
+    if lora_error is not None:
+        lora_predicted_disease = "unknown"
+        lora_confidence = "unknown"
+        lora_response_stored = f"GENERATION ERROR: {lora_error}"
+    else:
+        lora_final_text = isolate_final_answer(lora_response)
+        lora_predicted_disease = extract_predicted_disease(lora_final_text, truncated=lora_truncated)
+        lora_confidence = extract_confidence(lora_final_text)
+        lora_response_stored = lora_response
+
+    lora_correct = lora_predicted_disease == ground_truth
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    print("LoRA prediction :", lora_predicted_disease)
+    print("LoRA confidence :", lora_confidence)
+    print("LoRA correct    :", lora_correct)
+
+    # --------------------------------------------------------
+    # COMPARE
+    # --------------------------------------------------------
+
+    if base_correct and not lora_correct:
+        verdict = "LoRA REGRESSED this image"
+    elif lora_correct and not base_correct:
+        verdict = "LoRA IMPROVED this image"
+    elif base_correct and lora_correct:
+        verdict = "Both correct"
+    else:
+        verdict = "Both incorrect"
+
+    print()
+    print("Verdict:", verdict)
+
+    # --------------------------------------------------------
+    # STORE
+    # --------------------------------------------------------
+
+    y_true.append(ground_truth)
+    y_pred_base.append(base_predicted_disease)
+    y_pred_lora.append(lora_predicted_disease)
+
+    results.append(
+        {
+            "image": filename,
+            "ground_truth": ground_truth,
+            "base_prediction": base_predicted_disease,
+            "base_confidence": base_confidence,
+            "base_truncated": base_truncated,
+            "base_correct": base_correct,
+            "base_inference_time": base_inference_time,
+            "base_response": base_response_stored,
+            "lora_prediction": lora_predicted_disease,
+            "lora_confidence": lora_confidence,
+            "lora_truncated": lora_truncated,
+            "lora_correct": lora_correct,
+            "lora_inference_time": lora_inference_time,
+            "lora_response": lora_response_stored,
+            "verdict": verdict,
+        }
+    )
+
+    # Release per-image processor tensors and image objects.
+    try:
+        del inputs
+    except Exception:
+        pass
+
+    try:
+        del image
+    except Exception:
+        pass
+
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+
+# ============================================================
+# STEP 8: SAVE CSV
+# ============================================================
+
+print()
+print()
+print("=" * 80)
+print("STEP 8: SAVE RESULTS")
+print("=" * 80)
+print()
+
+try:
+    with open(RESULTS_CSV, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(
+            f,
+            fieldnames=[
+                "image",
+                "ground_truth",
+                "base_prediction",
+                "base_confidence",
+                "base_truncated",
+                "base_correct",
+                "base_inference_time",
+                "base_response",
+                "lora_prediction",
+                "lora_confidence",
+                "lora_truncated",
+                "lora_correct",
+                "lora_inference_time",
+                "lora_response",
+                "verdict",
+            ],
+        )
+        writer.writeheader()
+        for row in results:
+            writer.writerow(row)
+
+    print("Results saved:", RESULTS_CSV)
+
+except Exception as e:
+    print("Could not save CSV:", repr(e))
+
+
+# ============================================================
+# STEP 9: METRICS -- BASE vs LORA
+# ============================================================
+
+print()
+print()
+print("=" * 80)
+print("STEP 9: METRICS -- BASE vs BASE+LoRA")
+print("=" * 80)
+print()
+
+if len(y_true) == 0:
+    print("No evaluation results available.")
+    raise SystemExit(1)
+
+labels = ["early blight", "late blight", "healthy"]
+
+
+def compute_metrics(y_true, y_pred):
+    return {
+        "accuracy": accuracy_score(y_true, y_pred),
+        "macro_precision": precision_score(y_true, y_pred, average="macro", zero_division=0),
+        "macro_recall": recall_score(y_true, y_pred, average="macro", zero_division=0),
+        "macro_f1": f1_score(y_true, y_pred, average="macro", zero_division=0),
+        "weighted_precision": precision_score(y_true, y_pred, average="weighted", zero_division=0),
+        "weighted_recall": recall_score(y_true, y_pred, average="weighted", zero_division=0),
+        "weighted_f1": f1_score(y_true, y_pred, average="weighted", zero_division=0),
+    }
+
+
+base_metrics = compute_metrics(y_true, y_pred_base)
+lora_metrics = compute_metrics(y_true, y_pred_lora)
+
+metric_rows = [
+    ("Accuracy", "accuracy"),
+    ("Macro Precision", "macro_precision"),
+    ("Macro Recall", "macro_recall"),
+    ("Macro F1", "macro_f1"),
+    ("Weighted Precision", "weighted_precision"),
+    ("Weighted Recall", "weighted_recall"),
+    ("Weighted F1", "weighted_f1"),
+]
+
+print(f"{'Metric':22s}{'Base':>12s}{'Base+LoRA':>12s}{'Delta':>12s}")
+print("-" * 58)
+
+for display_name, key in metric_rows:
+    base_val = base_metrics[key] * 100
+    lora_val = lora_metrics[key] * 100
+    delta = lora_val - base_val
+    sign = "+" if delta >= 0 else ""
+    print(f"{display_name:22s}{base_val:11.2f}%{lora_val:11.2f}%{sign}{delta:10.2f}%")
+
+print()
+
+
+# ============================================================
+# STEP 10: CONFUSION MATRICES (BASE and LoRA, side by side)
+# ============================================================
+
+print()
+print("=" * 80)
+print("STEP 10: CONFUSION MATRICES")
+print("=" * 80)
+print()
+
+
+def print_confusion_matrix(y_true, y_pred, title):
+    matrix_labels = labels + ["other"]
+    y_pred_for_matrix = [p if p in labels else "other" for p in y_pred]
+    cm = confusion_matrix(y_true, y_pred_for_matrix, labels=matrix_labels)
+
+    print(title)
+    header = f"{'Actual / Predicted':20s}{'Early':>10s}{'Late':>10s}{'Healthy':>10s}{'Other':>10s}"
+    print(header)
+    print("-" * 60)
+    for label, row in zip(labels, cm):
+        print(f"{label:20s}{row[0]:10d}{row[1]:10d}{row[2]:10d}{row[3]:10d}")
+    if any(p not in labels for p in y_pred):
+        print(
+            "Note: 'Other' covers predictions that never resolved to one "
+            "of the three known classes (e.g. 'unknown' or 'incomplete')."
+        )
+    print()
+
+
+print_confusion_matrix(y_true, y_pred_base, "BASE MODEL")
+print_confusion_matrix(y_true, y_pred_lora, "BASE + LoRA")
+
+
+# ============================================================
+# STEP 11: PER-CLASS CLASSIFICATION REPORTS
+# ============================================================
+
+print("=" * 80)
+print("STEP 11: PER-CLASS CLASSIFICATION REPORTS")
+print("=" * 80)
+print()
+
+print("BASE MODEL")
+print(classification_report(y_true, y_pred_base, labels=labels, zero_division=0, digits=4))
+
+print("BASE + LoRA")
+print(classification_report(y_true, y_pred_lora, labels=labels, zero_division=0, digits=4))
+
+
+# ============================================================
+# STEP 12: PER-IMAGE COMPARISON TABLE
+# ============================================================
+
+print("=" * 80)
+print("STEP 12: PER-IMAGE COMPARISON")
+print("=" * 80)
+print()
+
+print(
+    f"{'Image':32s} {'Actual':13s} {'Base Pred':13s} {'B':4s} "
+    f"{'LoRA Pred':13s} {'L':4s} {'Verdict':26s}"
+)
+print("-" * 110)
+
+for row in results:
+    base_mark = "PASS" if row["base_correct"] else "FAIL"
+    lora_mark = "PASS" if row["lora_correct"] else "FAIL"
+    print(
+        f"{row['image'][-32:]:32s} "
+        f"{row['ground_truth'][:13]:13s} "
+        f"{row['base_prediction'][:13]:13s} "
+        f"{base_mark:4s} "
+        f"{row['lora_prediction'][:13]:13s} "
+        f"{lora_mark:4s} "
+        f"{row['verdict']:26s}"
+    )
+
+print()
+
+improved = sum(1 for r in results if r["verdict"] == "LoRA IMPROVED this image")
+regressed = sum(1 for r in results if r["verdict"] == "LoRA REGRESSED this image")
+both_correct = sum(1 for r in results if r["verdict"] == "Both correct")
+both_wrong = sum(1 for r in results if r["verdict"] == "Both incorrect")
+
+print(f"Images where LoRA improved on base : {improved}")
+print(f"Images where LoRA regressed vs base: {regressed}")
+print(f"Images both got right              : {both_correct}")
+print(f"Images both got wrong               : {both_wrong}")
+print()
+
+if skipped_images:
+    print("Skipped images:")
+    for filename, reason in skipped_images:
+        print(f"  - {filename}: {reason}")
+    print()
+
+print("CSV results:", RESULTS_CSV)
+print()
+print("=" * 80)
+print("DONE")
+print("=" * 80)
+print()

@@ -1,0 +1,49 @@
+================================================================================
+/workspace/outputs/lora/cropguard_nemotron_lora_full_2gpu/epoch_1_step_26459/model/adapter_model.safetensors
+Total tensors: 232
+LoRA A tensors: 116
+LoRA B tensors: 116
+
+First LoRA A keys:
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_A.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.14.mixer.out_proj.lora_A.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.down_proj.lora_A.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.up_proj.lora_A.weight
+base_model.model.language_model.model.layers.16.mixer.in_proj.lora_A.weight
+base_model.model.language_model.model.layers.16.mixer.out_proj.lora_A.weight
+
+First LoRA B keys:
+base_model.model.language_model.model.layers.0.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.0.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.1.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.10.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.11.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.k_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.o_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.q_proj.lora_B.weight
+base_model.model.language_model.model.layers.12.mixer.v_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.13.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.14.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.14.mixer.out_proj.lora_B.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.down_proj.lora_B.weight
+base_model.model.language_model.model.layers.15.mixer.shared_experts.up_proj.lora_B.weight
+base_model.model.language_model.model.layers.16.mixer.in_proj.lora_B.weight
+base_model.model.language_model.model.layers.16.mixer.out_proj.lora_B.weight

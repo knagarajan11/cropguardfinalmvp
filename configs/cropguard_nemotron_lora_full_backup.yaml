@@ -1,0 +1,228 @@
+recipe: FinetuneRecipeForVLM
+
+# ============================================================
+# TRAINING SCHEDULE
+# ============================================================
+
+step_scheduler:
+  global_batch_size: 1
+  local_batch_size: 1
+
+  # Your dataset has ~1350 training examples.
+  num_epochs: 1
+
+  ckpt_every_steps: 100
+  val_every_steps: 100
+
+  log_remote_every_steps: 1
+  gc_every_steps: 5
+
+
+# ============================================================
+# DISTRIBUTED ENVIRONMENT
+# ============================================================
+
+dist_env:
+  backend: nccl
+  timeout_minutes: 60
+
+
+# ============================================================
+# RANDOM SEED
+# ============================================================
+
+rng:
+  _target_: nemo_automodel.components.training.rng.StatefulRNG
+  seed: 1234
+  ranked: true
+
+
+# ============================================================
+# MODEL
+# ============================================================
+
+model:
+  _target_: nemo_automodel.NeMoAutoModelForImageTextToText.from_pretrained
+
+  pretrained_model_name_or_path: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+
+  trust_remote_code: true
+
+  torch_dtype: torch.bfloat16
+
+
+# ============================================================
+# PROCESSOR
+# ============================================================
+
+processor:
+  _target_: transformers.AutoProcessor.from_pretrained
+
+  pretrained_model_name_or_path: /workspace/hf_cache/hub/models--nvidia--Nemotron-3-Nano-Omni-30B-A3B-Reasoning-BF16/snapshots/e5e9932441de940c9a62185c870ea5bcd4cd24e2
+
+  trust_remote_code: true
+
+
+# ============================================================
+# DISTRIBUTED STRATEGY
+# ============================================================
+
+distributed:
+  strategy: fsdp2
+
+  # Use all available GPUs for data parallelism.
+  dp_size: none
+
+  # No tensor parallelism.
+  tp_size: 1
+
+  # No context parallelism.
+  cp_size: 1
+
+  sequence_parallel: false
+
+
+# ============================================================
+# LOSS
+# ============================================================
+
+loss_fn:
+  _target_: nemo_automodel.components.loss.masked_ce.MaskedCrossEntropy
+
+
+# ============================================================
+# DATASET
+# ============================================================
+
+dataset:
+  _target_: nemo_automodel.components.datasets.vlm.datasets.load_dataset
+
+  path: json
+
+  data_files:
+    train: /workspace/data/sft/train.jsonl
+
+  split: train
+
+
+# ============================================================
+# TRAINING DATALOADER
+# ============================================================
+
+dataloader:
+  _target_: torchdata.stateful_dataloader.StatefulDataLoader
+
+  num_workers: 0
+
+  pin_memory: true
+
+  collate_fn:
+    _target_: cropguard_collator.cropguard_nemotron_collate_fn
+
+    max_length: 4096
+
+
+# ============================================================
+# VALIDATION DATASET
+# ============================================================
+
+validation_dataset:
+  _target_: nemo_automodel.components.datasets.vlm.datasets.load_dataset
+
+  path: json
+
+  data_files:
+    validation: /workspace/data/sft/validation.jsonl
+
+  split: validation
+
+
+# ============================================================
+# VALIDATION DATALOADER
+# ============================================================
+
+validation_dataloader:
+  _target_: torchdata.stateful_dataloader.StatefulDataLoader
+
+  num_workers: 0
+
+  pin_memory: true
+
+  collate_fn:
+    _target_: cropguard_collator.cropguard_nemotron_collate_fn
+
+    max_length: 4096
+
+
+# ============================================================
+# LORA / PEFT
+# ============================================================
+
+peft:
+  _target_: nemo_automodel.components._peft.lora.PeftConfig
+
+  match_all_linear: false
+
+  # Do NOT train the vision/audio components.
+  # Do NOT train lm_head.
+  exclude_modules:
+    - "*vision_tower*"
+    - "*vision_model*"
+    - "*vision*"
+    - "*visual*"
+    - "*image_encoder*"
+    - "*audio*"
+    - "*sound*"
+    - "*lm_head*"
+
+  # LoRA rank
+  dim: 8
+
+  # LoRA alpha
+  alpha: 32
+
+  use_triton: true
+
+
+# ============================================================
+# FREEZE CONFIGURATION
+# ============================================================
+
+freeze_config:
+  freeze_embeddings: true
+
+  freeze_vision_tower: true
+
+  freeze_audio_tower: true
+
+  freeze_language_model: false
+
+
+# ============================================================
+# OPTIMIZER
+# ============================================================
+
+optimizer:
+  _target_: torch.optim.AdamW
+
+  lr: 1.0e-3
+
+  weight_decay: 0.01
+
+  betas:
+    - 0.9
+    - 0.95
+
+
+# ============================================================
+# CHECKPOINT
+# ============================================================
+
+checkpoint:
+  enabled: true
+
+  checkpoint_dir: /workspace/outputs/lora/cropguard_nemotron_lora
+
+  model_save_format: safetensors
+
+  save_consolidated: false

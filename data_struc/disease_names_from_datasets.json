@@ -1,0 +1,52 @@
+{
+  "PlantVillage": [
+    "citrus_greening",
+    "leaf_mold",
+    "healthy",
+    "spider_mites",
+    "target_spot",
+    "cedar_apple_rust",
+    "mosaic_virus",
+    "leaf_scorch",
+    "leaf_blight",
+    "black_rot",
+    "cercospora_leaf_spot",
+    "common_rust",
+    "esca",
+    "northern_leaf_blight",
+    "apple_scab",
+    "septoria_leaf_spot",
+    "late_blight",
+    "powdery_mildew",
+    "yellow_leaf_curl_virus",
+    "early_blight",
+    "bacterial_spot"
+  ],
+  "PlantDoc": [
+    "powdery_mildew",
+    "late_blight",
+    "healthy",
+    "early_blight",
+    "spider_mites",
+    "mosaic_virus",
+    "bacterial_spot",
+    "northern_leaf_blight",
+    "cercospora_leaf_spot",
+    "apple_scab",
+    "septoria_leaf_spot",
+    "leaf_mold",
+    "yellow_leaf_curl_virus",
+    "cedar_apple_rust",
+    "UNKNOWN",
+    "black_rot",
+    "common_rust"
+  ],
+  "Rice1426": [
+    "bacterial_leaf_blight",
+    "sheath_blight",
+    "brown_spot",
+    "scald",
+    "leaf_blast",
+    "healthy"
+  ]
+}

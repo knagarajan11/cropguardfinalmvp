@@ -1,0 +1,205 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+from typing import Any
+
+import faiss
+import numpy as np
+
+from knowledge.vl_embedder import NVIDIAVLEmbedder, VLEmbeddingConfig
+
+
+INDEX_DIR = Path("/workspace/index/recommendation")
+
+
+class RecommendationRetriever:
+    """Persisted FAISS retriever for unified JSON/PDF/Web recommendations."""
+
+    def __init__(
+        self,
+        *,
+        index_dir: str | Path = INDEX_DIR,
+        embedder: NVIDIAVLEmbedder | None = None,
+    ) -> None:
+
+        self.index_dir = Path(index_dir)
+
+        self.index_path = self.index_dir / "faiss.index"
+        self.chunks_path = self.index_dir / "chunks.jsonl"
+        self.meta_path = self.index_dir / "index_meta.json"
+
+        if not self.index_path.exists():
+            raise FileNotFoundError(
+                f"FAISS index not found: {self.index_path}"
+            )
+
+        if not self.chunks_path.exists():
+            raise FileNotFoundError(
+                f"Chunk metadata not found: {self.chunks_path}"
+            )
+
+        self.index = faiss.read_index(
+            str(self.index_path)
+        )
+
+        self.chunks: list[dict[str, Any]] = []
+
+        with self.chunks_path.open(
+            "r",
+            encoding="utf-8",
+        ) as f:
+            for line in f:
+                line = line.strip()
+
+                if line:
+                    self.chunks.append(
+                        json.loads(line)
+                    )
+
+        if self.index.ntotal != len(self.chunks):
+            raise RuntimeError(
+                "FAISS vector count does not match chunk count: "
+                f"{self.index.ntotal} != {len(self.chunks)}"
+            )
+
+        if embedder is None:
+            embedder = NVIDIAVLEmbedder(
+                VLEmbeddingConfig(
+                    model_path=(
+                        "/home/gsh-ndhmy/.cache/huggingface/"
+                        "models--nvidia--llama-nemotron-embed-vl-1b-v2/"
+                        "snapshots/"
+                        "582e3bf72aee355e3c59ed89de53543c5b0657ee"
+                    ),
+                    device="cuda",
+                    normalize=True,
+                    pooling="avg",
+                )
+            )
+
+        self.embedder = embedder
+
+    def search(
+        self,
+        query: str,
+        *,
+        top_k: int = 5,
+        crop: str | None = None,
+        disease: str | None = None,
+    ) -> list[dict[str, Any]]:
+
+        if not query or not query.strip():
+            return []
+
+        if top_k <= 0:
+            return []
+
+        query_embedding = self.embedder.encode_queries(
+            [query]
+        )
+
+        query_embedding = np.asarray(
+            query_embedding,
+            dtype=np.float32,
+        )
+
+        if query_embedding.ndim != 2:
+            raise RuntimeError(
+                f"Unexpected query embedding shape: "
+                f"{query_embedding.shape}"
+            )
+
+        scores, indices = self.index.search(
+            query_embedding,
+            min(top_k, self.index.ntotal),
+        )
+
+        results: list[dict[str, Any]] = []
+
+        for score, index_id in zip(
+            scores[0],
+            indices[0],
+        ):
+
+            if index_id < 0:
+                continue
+
+            chunk = dict(
+                self.chunks[index_id]
+            )
+
+            # Optional application-level context filters.
+            if crop:
+                chunk_crop = (
+                    chunk.get("crop") or ""
+                ).lower()
+
+                if chunk_crop != crop.lower():
+                    continue
+
+            if disease:
+                chunk_disease = (
+                    chunk.get("disease") or ""
+                ).lower()
+
+                if chunk_disease != disease.lower():
+                    continue
+
+            # Build the metadata contract expected by the
+            # validated NVIDIA Reranker.
+            metadata = dict(
+                chunk.get("metadata") or {}
+            )
+
+            metadata.update(
+                {
+                    "chunk_id": chunk.get("chunk_id"),
+                    "knowledge_id": chunk.get("knowledge_id"),
+                    "source": chunk.get("source"),
+                    "source_type": chunk.get("source_type"),
+                    "source_uri": chunk.get("source_uri"),
+                    "document_id": chunk.get("document_id"),
+                    "document_title": chunk.get("document_title"),
+                    "page": chunk.get("page"),
+                    "section": chunk.get("section"),
+                    "subsection": chunk.get("subsection"),
+                    "crop": chunk.get("crop"),
+                    "disease": chunk.get("disease"),
+                    "evidence_type": chunk.get("evidence_type"),
+                    "recommendation_preference": chunk.get(
+                        "recommendation_preference"
+                    ),
+                    "organic_eligible": chunk.get(
+                        "organic_eligible"
+                    ),
+                    "ipm_eligible": chunk.get(
+                        "ipm_eligible"
+                    ),
+                }
+            )
+
+            chunk["metadata"] = metadata
+            chunk["vector_score"] = float(score)
+
+            results.append(chunk)
+
+        return results
+
+    def info(self) -> dict[str, Any]:
+
+        info = {
+            "index_type": type(self.index).__name__,
+            "dimension": self.index.d,
+            "vectors": self.index.ntotal,
+            "chunks": len(self.chunks),
+        }
+
+        if self.meta_path.exists():
+            info["metadata"] = json.loads(
+                self.meta_path.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+        return info

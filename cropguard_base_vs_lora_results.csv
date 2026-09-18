@@ -1,0 +1,495 @@
+image,ground_truth,base_prediction,base_confidence,base_truncated,base_correct,base_inference_time,base_response,lora_prediction,lora_confidence,lora_truncated,lora_correct,lora_inference_time,lora_response,verdict
+Corn_maize___Common_rust/Corn_maize___Common_rust_sample.jpg,common rust,incomplete,unknown,True,False,142.8523223400116,"We need to analyze the leaf image. It's a green leaf, possibly from a cereal crop (e.g., wheat, barley) or maybe a vegetable like maize? The leaf shape is elongated with a central vein, looks like a leaf of a cereal (e.g., wheat, barley) or maybe a grass. The symptoms: small brownish spots scattered, some larger necrotic lesions, some yellowing, some white patches (maybe tissue death). The pattern: small speckled lesions along the leaf margin and midrib, some elongated lesions. Could be early blight (Alternaria), late blight (Phytophthora), common rust (Puccinia), northern leaf blight (Exserohilum), or healthy.
+
+Let's examine each disease:
+
+1. Early blight (Alternaria solani) typically on tomato, potato, but also can affect other crops. Symptoms: target-like lesions with concentric rings, usually on older leaves, brown with yellow halos. Not typical for cereal.
+
+2. Late blight (Phytophthora infestans) on potato, tomato; water-soaked lesions, white mold, rapid collapse. Not likely.
+
+3. Common rust (Puccinia spp.) on cereals (e.g., wheat, barley) appears as small, reddish-brown pustules (uredinia) on leaf surfaces, often in rows, may cause orange-brown spots. The image shows small brown specks, but also larger necrotic areas. Could be rust.
+
+4. Northern leaf blight (Exserohilum turcicum) on corn (maize) causes long, cigar-shaped lesions, tan to brown, with a dark margin. The leaf shape looks more like a corn leaf (long, narrow). The lesions appear as elongated brown lesions, some with a dark margin, and some smaller spots. The leaf is broadish but could be a corn leaf. Northern leaf blight lesions are large, linear, with a dark brown margin and a tan center, often with a ""cigar-shaped"" appearance. The image shows some elongated lesions, but also many small speckles. Could be a mix.
+
+5. Healthy: no lesions.
+
+Given the leaf shape (broad, with a central vein) and the lesions: there are small brown speckles, some larger necrotic lesions, some white patches (maybe tissue death). The pattern looks like ""leaf spot"" disease. Could be early blight (target lesions) but those are more defined. Could be common rust (pustules). Could be northern leaf blight (long lesions). The leaf appears to be from a cereal like wheat? Wheat leaf rust appears as small, reddish-brown pustules (uredinia) on both surfaces, often in rows. The image shows many small brown spots, maybe pustules.
+
+But also there are larger lesions that are elongated and brown, maybe a secondary infection.
+
+Let's think of the possible disease classes given: early blight, late blight, common rust, northern leaf blight, healthy. These are typical for cereals (wheat, barley, corn). Early blight is more for solanaceous crops (potato, tomato). Late blight also solanaceous. Common rust affects cereals (wheat, barley, oats). Northern leaf blight affects corn (maize). So the crop likely is a cereal (wheat, barley, corn). The leaf shape looks like a corn leaf (long, narrow, with a midrib). However, the leaf is relatively broad, maybe a wheat leaf? Wheat leaves are long and narrow, not as broad as shown. The leaf shown is fairly broad, maybe a leaf of a vegetable like lettuce? But the disease classes are limited.
+
+Let's examine each disease's typical symptoms:
+
+- Early blight: lesions are circular to irregular, brown with concentric rings, often with a yellow halo. Usually on older leaves. Not many small speckles.
+
+- Late blight: water-soaked lesions, white fuzzy growth, rapid necrosis. Not seen.
+
+- Common rust: appears as small, raised, reddish-brown pustules (uredinia) on leaf surfaces, often on the underside. Spots may coalesce. The image shows many small brown spots, could be rust pustules.
+
+- Northern leaf blight: long, narrow lesions, tan with dark brown margin, often with a ""cigar shape"". The image shows some elongated lesions, but also many small spots. Could be early stage.
+
+- Healthy: no symptoms.
+
+The leaf shows both small speckles and larger lesions. The small speckles could be rust or early blight. The larger lesions could be a different disease or advanced stage.
+
+Given the limited disease list, the most likely disease appears to be ""common rust"" (class 3) because the leaf shows many small brown spots that could be rust pustules. However, the presence of larger necrotic lesions could also be a sign of northern leaf blight (class 4). But northern leaf blight lesions are typically longer and more distinct, not just small speckles.
+
+Let's examine the image more closely: The leaf is green, with a central vein (midrib) that is lighter. There are many small brown spots scattered across the leaf surface, especially near the midrib and edges. There are also some larger, elongated brown lesions, some with a lighter margin. The leaf margin appears somewhat ragged, with some tissue missing (maybe due to feeding or decay). The overall appearance suggests a foliar disease causing spots and lesions.
+
+Common rust on wheat appears as small, reddish-brown pustules on the leaf surface, often on the upper side, and can be numerous. The leaf may also show yellowing. The larger lesions could be a secondary infection or a different disease.
+
+Northern leaf blight on corn: lesions are long, narrow, tan with dark brown margin, often with a ""cigar shape"". The leaf in the image does have some elongated lesions, but they are not clearly cigar-shaped; they are more irregular.
+
+Early blight lesions are target-like with concentric rings; not clearly visible.
+
+Late blight lesions are water-soaked and may have white mold; not evident.
+
+Thus, the most likely disease is common rust.
+
+But we need to be careful: The leaf could be from a vegetable like tomato, where early blight is common. The leaf shape is somewhat like a tomato leaf (broad, lobed). However, the leaf shown is not lobed; it's more like a simple leaf with a midrib. Tomato leaves are compound with leaflets. So maybe it's a cereal leaf.
+
+If it's wheat, common rust is likely. If it's corn, northern leaf blight is likely. The leaf shape is more like a corn leaf (long, narrow, with a midrib). The lesions are elongated, which matches northern leaf blight. Also, the lesions appear to be large, brown, with a darker margin, which is typical for northern leaf blight. The small speckles could be early lesions or other stress.
+
+Let's examine typical images: Northern leaf blight lesions on corn are long, narrow, tan to brown, with a dark brown margin, often with a ""cigar shape"". They start as small spots that enlarge into long lesions. The image shows some elongated lesions, but also many small spots. However, the presence of many small spots could be early infection or other disease.
+
+Common rust on corn (Puccinia",northern leaf blight,high,False,False,34.57589626312256,"I need to analyze the crop leaf image and diagnose the most likely disease.
+The image shows a corn leaf (maize) with lesions.
+The lesion is long, winding, and brownish, starting from the midrib and extending towards the margin. This is characteristic of northern leaf blight.
+The leaf is clearly corn.
+The disease is northern leaf blight.
+
+Let's verify the disease classes:
+1. early blight - usually small spots with target pattern, not a long winding lesion.
+2. late blight - usually water-soaked lesions with white mold, not this.
+3. common rust - small pustules, not a large lesion.
+4. northern leaf blight - long, winding, cigar-shaped lesions. This matches perfectly.
+5. healthy - clearly not healthy.
+
+So the diagnosis is northern leaf blight.
+
+Crop: corn
+Most likely disease: northern leaf blight
+Visible symptoms: long brown lesion along the midrib
+Alternative causes: maybe fungal infection
+Immediate action: apply fungicide
+Preventive measures: crop rotation, resistant varieties
+Another image needed: no
+Confidence: high
+
+Let's format the output as requested.
+</think>
+Most likely disease: northern leaf blight
+Confidence level: high
+Crop name: corn
+Recommended immediate action: apply fungicide
+Preventive measures: crop rotation, resistant varieties
+Healthy: false
+Dataset source: PlantVillage
+
+Northern leaf blight is characterized by long, winding lesions that follow the leaf veins. The lesion visible in the image is consistent with this disease, appearing as a large brown area starting from the midrib and extending down the leaf. This is a significant fungal disease affecting corn crops.
+
+Northern leaf blight: The image shows a large, brown, winding lesion characteristic of northern leaf blight, which is a fungal disease (caused by Exserohilum northerni) that affects corn leaves.
+
+healthy: False
+crop: corn
+diagnosis: northern_leaf_blight
+image_size: [256, 256]
+source: PlantVillage",Both incorrect
+Corn_maize___Northern_Leaf_Blight/Corn_maize___Northern_Leaf_Blight_sample.jpg,northern leaf blight,northern leaf blight,high,False,True,77.95201206207275,"We need to analyze the leaf image. It's a corn leaf (maize) likely. The leaf shows lesions with brown necrotic areas, some yellowing, and small dark spots. The pattern: elongated lesions with brown necrotic tissue, possibly with a ""leaf blight"" appearance. Could be northern leaf blight (caused by Exserohilum turcicum) which produces long, narrow, cigar-shaped lesions that are tan to brown with a purple border, often with a ""frosted"" appearance. The image shows elongated brown lesions, some with a yellowish margin, and some small spots. Could also be early blight (Alternaria) which causes rectangular lesions with concentric rings, but those are usually more defined with dark brown lesions with target-like rings. Late blight (Phytophthora) shows water-soaked lesions that turn brown, often with white mold on underside; not obvious here. Common rust (Puccinia) shows linear, linear rust pustules (orange) on leaf surface; not seen.
+
+The leaf appears to have large necrotic areas, with some green tissue remaining, and some small dark specks (maybe fungal spores). The shape is elongated, not small spots typical of rust. The lesion appears to be a ""cigar-shaped"" lesion typical of northern leaf blight. So likely disease: northern leaf blight.
+
+Crop name: corn (maize).
+
+Now we need to provide the required items.
+
+1. Crop name: Maize (corn).
+
+2. Most likely disease: northern leaf blight.
+
+3. Visible symptoms: elongated, cigar-shaped lesions, tan to brown necrotic tissue, yellowing margins, leaf tissue death, possible small dark spots (pycnidia), leaf wilting.
+
+4. Possible alternative causes: early blight (Alternaria), leaf spot diseases, nutrient deficiency, environmental stress (drought), insect damage.
+
+5. Recommended immediate action: scout field, confirm disease, apply appropriate fungicide (e.g., strobilurin, triazole) if disease confirmed, remove infected debris, avoid overhead irrigation.
+
+6. Preventive measures: plant resistant hybrids, rotate crops, maintain proper spacing for airflow, apply fungicide seed treatment, monitor weather for conducive conditions, use cultural practices.
+
+7. Whether another image is needed: Possibly yes, to confirm lesion shape and presence of fungal structures; but based on current image, we can give a provisional diagnosis.
+
+8. Confidence level: high (maybe 85-90%). Provide as ""high"" or maybe ""85%"". The format says <low/medium/high or a percentage>. Use ""high"" or ""85%"". I'll choose ""high"".
+
+Now format:
+
+Most likely disease: northern leaf blight
+
+Confidence level: high
+
+Then concise agricultural recommendation.
+
+Let's craft concise recommendation: ""Confirm diagnosis with a close‑up of lesion margins, scout for additional infected plants, and if confirmed apply a systemic fungicide (e.g., triazole) and improve field airflow.""
+
+Make sure to follow exactly the required format: The diagnosis line must be exactly ""Most likely disease: <disease name>"" and confidence line ""Confidence level: <low/medium/high or a percentage>"".
+
+Then provide the rest. Ensure we include all requested items.
+
+Let's produce final answer.
+</think>
+**Crop name:** Maize (corn)  
+
+**Most likely disease:** northern leaf blight  
+
+**Visible symptoms:**  
+- Long, cigar‑shaped lesions that are tan‑brown to dark brown with a yellowish margin.  
+- Necrotic tissue that kills leaf cells, leaving irregular brown patches.  
+- Small dark specks (pycnidia) within the lesions.  
+- General yellowing and premature senescence of the affected leaf area.  
+
+**Possible alternative causes:**  
+- Early blight (Alternaria spp.) – usually shows rectangular lesions with concentric rings.  
+- Leaf spot diseases (e.g., Cercospora, Phyllosticta) – produce smaller, circular spots.  
+- Nutrient deficiency (especially nitrogen) or drought stress.  
+- Insect feeding damage that creates secondary lesions.  
+
+**Recommended immediate action:**  
+- Scout the field to verify the presence of characteristic elongated lesions on multiple plants.  
+- If confirmed, apply a systemic fungicide labeled for northern leaf blight (e.g., a triazole or strobilurin) according to label rates.  
+- Remove and destroy heavily infected leaf material to reduce inoculum source.  
+
+**Preventive measures:**  
+- Plant resistant maize hybrids.  
+- Ensure proper plant spacing and row orientation to promote airflow.  
+- Rotate crops and avoid planting corn in the same field consecutively.  
+- Use certified disease‑free seed and apply fungicide seed treatments.  
+- Monitor weather forecasts; apply fungicide pre‑emptively during periods of high humidity and rain.  
+
+**Whether another image is needed:** Yes, a close‑up of the lesion margins and the underside of the leaf would help confirm the presence of fungal structures and rule out other diseases.  
+
+**Confidence level:** high  
+
+**Agricultural recommendation:**  
+Confirm the diagnosis with additional imagery, then promptly apply an appropriate fungicide and implement cultural practices (enhanced airflow, crop rotation, resistant hybrids) to limit disease spread and protect yield.",northern leaf blight,high,False,True,34.50063991546631,"So, let's analyze the image. The crop is corn (maize) since the leaf is a corn leaf. Looking at the symptoms: there's extensive decay, with a large area of the leaf being dried and discolored, and some green edges. The disease here seems to be northern leaf blight, which is characterized by large lesions that can coalesce, leading to significant leaf loss. Let's check the disease classes. Northern leaf blight (NLB) is one of the options. The symptoms match: the lesion is large, elongated, and the leaf is heavily affected. So the most likely disease is northern leaf blight. Now, the crop is corn. Let's confirm each part.
+
+Crop name: corn
+Most likely disease: northern leaf blight
+Visible symptoms: large necrotic lesions, leaf tissue decay, some green margins
+Possible alternative causes: maybe northern leaf blight is the main one, but could there be other issues? But NLB is a common disease for corn with such symptoms.
+Recommended immediate action: apply fungicide if needed, remove infected leaves
+Preventive measures: crop rotation, use resistant varieties
+Another image might not be needed here since the symptoms are clear.
+
+Wait, let's check the disease classes. The options are early blight, late blight, common rust, northern leaf blight, healthy. The image shows a large lesion typical of northern leaf blight. So diagnosis is northern leaf blight.
+</think>
+Most likely disease: northern leaf blight
+Crop name: corn
+Visible symptoms: large necrotic lesions, leaf tissue decay, green margins with brown discoloration
+Possible alternative causes: northern leaf blight
+Recommended immediate action: apply fungicide and remove severely infected leaves
+Preventive measures: crop rotation, use resistant varieties
+Whether another image is needed: no
+Confidence level: high
+
+Northern leaf blight is characterized by large, elongated lesions that cause significant leaf tissue loss, which matches the image. The high confidence is due to the clear lesion structure and typical progression of the disease in corn.",Both correct
+Corn_maize___healthy/Corn_maize___healthy_sample.jpg,healthy,healthy,high,False,True,51.23449206352234,"We need to analyze leaf image. It's a single leaf, green, appears healthy? Let's examine. The leaf has a smooth surface, visible veins, no obvious spots, lesions, discoloration. There's a shadow on left side, but that's just lighting. No necrotic lesions, no rust pustules, no blight lesions. The leaf looks healthy.
+
+Thus crop name? Could be many, but leaf shape resembles maybe a generic leaf, maybe from a fruit tree (e.g., apple, pear) or maybe a vegetable like lettuce? The shape is ovate with serrated margin. Could be a leaf from a tree (e.g., peach, apple). But we need to identify crop. Since it's a leaf, maybe it's from a ""peach"" or ""apple"". However the prompt expects a crop name. Could be ""apple"". Let's assume it's an apple leaf (Rosaceae). But the disease classes are typical for many crops: early blight (usually on potatoes, tomatoes), late blight (potato, tomato), common rust (cereals like wheat, barley), northern leaf blight (maize), healthy (any). The leaf shape doesn't match typical cereal leaf (long narrow). It looks more like a broadleaf, maybe from a tree, but the disease classes are typical for field crops. Could be a leaf from a ""tomato"" (but tomato leaf is more lobed). This leaf is simple, ovate, serrated. Could be ""peach"" leaf (peach leaf curl disease etc). But peach leaf curl is not in list.
+
+Given the disease classes, the most likely disease among those is ""healthy"" if no symptoms. So likely the leaf is healthy.
+
+Thus:
+
+Crop name: Not clearly identifiable; maybe ""apple"" or ""peach"". But we need to give a crop name. Could answer ""Apple"" as a generic fruit tree. Or maybe ""unknown"". But we need to give a crop name. Let's choose ""Apple"" as plausible.
+
+Most likely disease: healthy (class 5). But the class list includes ""healthy"". So we set disease as ""healthy"". However the format says ""Most likely disease: <disease name>"" and must be one of the five disease classes. ""healthy"" is one of them. So we will say ""Most likely disease: healthy"".
+
+Visible symptoms: none; leaf appears intact, green, no lesions, no discoloration, no pustules.
+
+Possible alternative causes: environmental stress, nutrient deficiency, physical damage, etc.
+
+Recommended immediate action: monitor leaf, no action needed if healthy.
+
+Preventive measures: maintain proper cultural practices, avoid overhead irrigation, ensure good air circulation, monitor for early signs.
+
+Another image needed? Probably not; the leaf looks healthy.
+
+Confidence level: high (e.g., 95%).
+
+Now produce answer with required format.
+
+Check format: Must clearly state diagnosis using exactly this format:
+
+Most likely disease: <disease name>
+
+So we write:
+
+Most likely disease: healthy
+
+Then confidence:
+
+Confidence level: high
+
+Then concise agricultural recommendation.
+
+Let's craft recommendation: ""No immediate treatment required; continue regular scouting and maintain orchard hygiene.""
+
+Make concise.
+
+Now produce final answer.
+</think>
+Most likely disease: healthy  
+
+Confidence level: high  
+
+**Recommendation:** No treatment is needed; continue regular scouting and maintain good orchard hygiene (e.g., remove fallen leaves, ensure proper spacing for airflow).  
+
+*If any new symptoms appear, submit another image for re‑evaluation.*",healthy,high,False,True,25.476714372634888,"So, let's analyze the image. The leaf is a healthy-looking leaf with a smooth texture and no visible spots or lesions. The color is uniform green, and the structure is intact. So the crop is likely a healthy plant. Let's check the disease classes. The healthy class is one of them. So the most likely disease is healthy. Then the confidence level: since the leaf looks healthy, confidence is high. Now, the crop name—since it's a healthy leaf, maybe it's a common crop like apple or something, but the image doesn't show the whole plant. Wait, the leaf shape: the leaf is ovate with serrated edges, which is common in many plants. But the key is the disease. Since there's no disease symptoms, the disease is healthy. Let's confirm. The image shows a single leaf with no spots, so healthy. So the diagnosis is healthy.
+</think>
+Most likely disease: healthy
+Confidence level: high
+Crop name: apple
+Visible symptoms: healthy leaf with no visible spots or lesions
+Possible alternative causes: healthy
+Recommended immediate action: healthy
+Preventive measures: maintain good orchard hygiene
+Whether another image is needed: no
+IMPORTANT:
+Clearly state the diagnosis using exactly this format:
+Most likely disease: healthy
+Also clearly state your confidence using exactly this format:
+Confidence level: high
+Give a concise agricultural recommendation.
+The leaf is healthy, so no disease is present. Recommend monitoring for early signs of disease and ensuring proper cultural practices.",Both correct
+Tomato___Early_blight/Tomato___Early_blight_sample.jpg,early blight,early blight,medium,False,True,53.44064283370972,"We need to analyze the leaf image. It's a green leaf with dark lesions, some yellowing, necrotic spots. The lesions are irregular, dark brown/black, with some yellow halo. The leaf margin appears damaged. This looks like early blight (Alternaria solani) on tomato? Or late blight (Phytophthora infestans) which shows water-soaked lesions that turn brown/black, often with white mold. The image shows dark lesions, some yellowing, but not clearly water-soaked. Early blight typically shows target-like lesions with concentric rings, often on older leaves, with yellowing around lesions. The image shows dark spots, some with yellow margins, but not clearly concentric rings. Could be common rust (Puccinia spp.) which shows raised pustules with orange spores; not seen. Northern leaf blight (Exserohilum turcicum) shows long, cigar-shaped lesions, not seen. Healthy is obviously not.
+
+Given the options, early blight seems plausible. Late blight lesions are water-soaked, often with white mold on underside; not obvious. The lesions are dark, irregular, with some yellowing. Could be early blight.
+
+Crop name: likely tomato (Solanum lycopersicum) given leaf shape. Could also be pepper, but leaf shape resembles tomato.
+
+Thus:
+
+Most likely disease: early blight
+
+Visible symptoms: dark necrotic lesions with yellow halos, leaf yellowing, possible leaf drop.
+
+Possible alternative causes: nutrient deficiency, environmental stress, other fungal diseases.
+
+Recommended immediate action: remove affected leaves, apply fungicide (e.g., chlorothalonil or copper-based), improve airflow, avoid overhead watering.
+
+Preventive measures: rotate crops, use resistant varieties, apply fungicide protectively, maintain proper spacing, avoid moisture.
+
+Another image needed? Possibly to confirm, but we have enough.
+
+Confidence level: medium (maybe 70%). Provide as ""medium"" or ""70%"". The format says <low/medium/high or a percentage>. So we can give ""medium"" or ""70%"". Probably ""medium"". Let's give ""medium"".
+
+Now produce answer with required format.
+</think>
+**Crop name:** Tomato (Solanum lycopersicum)  
+
+**Most likely disease:** early blight  
+
+**Visible symptoms:**  
+- Dark, irregular necrotic lesions on the leaf surface  
+- Yellowish halos surrounding the lesions  
+- General yellowing and premature leaf senescence  
+
+**Possible alternative causes:**  
+- Nutrient deficiency (e.g., nitrogen)  
+- Environmental stress (e.g., drought, temperature extremes)  
+- Other fungal pathogens (e.g., septoria leaf spot)  
+
+**Recommended immediate action:**  
+- Prune and destroy heavily infected leaves to reduce inoculum  
+- Apply a labeled fungicide (e.g., chlorothalonil, mancozeb, or copper-based product) according to label rates  
+- Ensure good canopy airflow and avoid overhead irrigation  
+
+**Preventive measures:**  
+- Rotate crops with non‑solanaceous plants each season  
+- Use disease‑resistant tomato varieties  
+- Apply protective fungicide sprays before disease onset, especially during humid periods  
+- Maintain proper plant spacing and remove debris that can harbor pathogens  
+
+**Whether another image is needed:** No (the current image provides sufficient diagnostic information)  
+
+**Confidence level:** medium  
+
+**Agricultural recommendation:** Promptly remove and destroy affected foliage, initiate a fungicide program, and implement cultural practices that reduce leaf wetness and improve air circulation to limit disease spread.",early blight,high,False,True,36.84195280075073,"I need to analyze the image and provide the required information in the specified format.
+
+First, let's examine the image:
+- The image shows a leaf with visible damage
+- The leaf is green but has yellowing areas
+- There are multiple dark spots on the leaf
+- Some spots appear to be circular with yellow halos
+- There's a larger area of discoloration near the top right
+- The leaf is resting on a gray textured surface
+
+Now, let's identify the crop:
+- The leaf shape and the pattern of damage suggest this is a tomato leaf
+- Tomato is a common crop that suffers from the diseases listed
+
+Diagnosing the disease:
+- The symptoms show multiple dark spots with yellow halos
+- There's yellowing of the leaf tissue
+- The pattern is consistent with early blight, which is a common tomato disease
+- Early blight is caused by the fungus Alternaria solani
+- The symptoms match what we'd expect from early blight: dark spots with yellow margins
+
+Let's check the possible disease classes:
+1. early blight - matches the symptoms
+2. late blight - typically shows water-soaked lesions that expand rapidly, not seen here
+3. common rust - typically shows small brown pustules on the underside of leaves
+4. northern leaf blight - causes long, narrow lesions
+5. healthy - clearly not healthy
+
+The most likely disease is early blight.
+
+For the agricultural recommendation:
+- The leaf is severely infected
+- Immediate action should be to remove and destroy infected leaves
+- Apply a fungicide labeled for early blight
+- Rotate crops in the future
+
+The confidence level is high since the symptoms are characteristic of early blight.
+
+Now I'll format the response as requested.
+</think>
+Most likely disease: early blight
+Confidence level: high
+Crop name: tomato
+Visible symptoms: dark spots with yellow halos, yellowing of leaf tissue, multiple lesions
+Possible alternative causes: early blight
+Recommended immediate action: remove infected leaves and apply copper-based fungicide
+Preventive measures: rotate crops, avoid overhead watering, use mulch
+Whether another image is needed: no
+Confidence level: high",Both correct
+Tomato___Late_blight/Tomato___Late_blight_sample.jpg,late blight,late blight,medium   (≈70 % confidence based on visi,False,True,58.10288453102112,"We need to analyze the image: a leaf with green parts and a large brown necrotic area, possibly with some yellowing. The leaf appears to be from a vegetable crop, maybe tomato, pepper, or similar. The lesion is large, irregular, brown, with some water-soaked appearance? The image shows a leaf with a large necrotic lesion that is brown, possibly with a yellow halo. This could be late blight (Phytophthora infestans) which causes large, water-soaked lesions that turn brown and can have a white mold on underside. However, the image doesn't show white mold. Early blight (Alternaria solani) causes target-like lesions with concentric rings, usually on older leaves, not as large necrotic area. Common rust (Puccinia spp.) causes rust pustules, orange-brown spots, not this. Northern leaf blight (Exserohilum turcicum) causes long, cigar-shaped lesions, not this shape.
+
+The lesion appears to be a large, irregular brown necrotic area, possibly due to bacterial infection (bacterial blight) or possibly a fungal disease like late blight. The leaf also shows some wilting and curling.
+
+Given the options, late blight seems plausible: large, water-soaked lesions turning brown, can cause leaf collapse. The leaf shows a large brown area with some green margin, typical of late blight lesions.
+
+Thus, crop likely tomato (Solanum lycopersicum) or potato (Solanum tuberosum). The leaf shape looks like tomato leaf (lobed). So crop name: tomato.
+
+Most likely disease: late blight.
+
+Visible symptoms: large irregular brown necrotic lesions, water-soaked margins, leaf wilting, possible yellowing.
+
+Possible alternative causes: bacterial leaf spot, bacterial blight, nutrient deficiency, physical damage.
+
+Recommended immediate action: remove and destroy infected leaves, apply fungicide (copper-based or chlorothalonil) if late blight suspected, ensure proper spacing for airflow, avoid overhead irrigation.
+
+Preventive measures: use resistant varieties, rotate crops, apply fungicide protectively, maintain field sanitation, avoid moisture.
+
+Another image needed? Possibly yes, to confirm presence of white mold on underside.
+
+Confidence level: medium (since image quality limited, but symptoms align with late blight).
+
+Now format:
+
+Most likely disease: late blight
+
+Confidence level: medium
+
+Provide concise recommendation.
+
+Let's craft answer.
+</think>
+**Crop name:** Tomato (Solanum lycopersicum)  
+
+**Most likely disease:** late blight  
+
+**Visible symptoms:**  
+- Large, irregular brown necrotic lesion with a water‑soaked margin  
+- Yellowing and wilting of surrounding tissue  
+- Leaf curling and partial collapse  
+
+**Possible alternative causes:**  
+- Bacterial leaf spot or bacterial blight  
+- Nutrient deficiency (e.g., potassium) or drought stress  
+- Physical damage or herbicide drift  
+
+**Recommended immediate action:**  
+- Remove and destroy the affected leaf (do not compost).  
+- Apply a certified fungicide labeled for late blight (e.g., copper‑based or chlorothalonil) according to label rates.  
+- Improve field airflow and avoid overhead irrigation to keep foliage dry.  
+
+**Preventive measures:**  
+- Plant resistant tomato varieties.  
+- Rotate crops and avoid planting tomatoes or potatoes in the same field for at least 2 years.  
+- Use certified disease‑free seed/seedlings.  
+- Apply protective fungicide sprays before conditions favor infection (wet, cool weather).  
+
+**Whether another image is needed:** Yes – a close‑up of the lesion underside to check for the characteristic white‑gray fuzzy growth of *Phytophthora* would help confirm the diagnosis.  
+
+**Confidence level:** medium   (≈70 % confidence based on visible symptoms and available options)",late blight,high,False,True,21.470373153686523,"So, let's analyze the image. The crop here is tomato, I think. The leaf has a large brown, decayed area. Let's check the disease classes. Late blight is a common disease for tomatoes that causes large brown lesions. Let's see the symptoms: the main symptom is the big brown part, which matches late blight. So the most likely disease is late blight. Now, the crop is tomato. Let's confirm. The image shows a tomato leaf with late blight symptoms. So the diagnosis is late blight. Then the other parts: visible symptoms are the large brown decayed area. Alternative causes might be other rots, but late blight is the main one here. Recommended action: remove the affected leaf to prevent spread. Preventive measures: use fungicides, ensure good air circulation. Another image? Maybe not needed, but the current image is enough. Confidence: high.
+</think>
+Most likely disease: late blight
+Crop name: tomato
+Visible symptoms: large brown decayed area on leaf
+Possible alternative causes: late blight
+Recommended immediate action: remove affected leaf to prevent spread
+Preventive measures: apply fungicide and ensure proper ventilation
+Whether another image is needed: no
+Confidence level: high",Both correct
+Tomato___healthy/Tomato___healthy_sample.jpg,healthy,healthy,high (≈95%),False,True,72.46155190467834,"We need to analyze leaf image. It's a green leaf, shape somewhat heart-shaped, with visible veins, no obvious lesions. The leaf appears healthy, no spots, no discoloration. So likely ""healthy"". Crop name? The leaf shape resembles maybe a bean (Phaseolus) or maybe a cucurbit? Heart-shaped leaf could be from many crops like soybean, pea, bean, or maybe a vine. But we need to identify crop. Without more context, maybe it's a generic leaf, but we can guess ""soybean"" or ""bean"". However the disease classes are specific to certain crops: early blight (often tomato), late blight (potato, tomato), common rust (cereals like wheat, barley), northern leaf blight (maize), healthy (any). The leaf shape is not typical for maize (long narrow), not for wheat (linear). It looks like a broadleaf, maybe a legume like soybean or bean. Early blight affects tomato, potato; late blight also tomato/potato; common rust affects cereals; northern leaf blight affects maize. The leaf doesn't show typical symptoms of those diseases. So likely ""healthy"". Crop could be ""soybean"" or ""bean"". But we need to state crop name. Maybe we can say ""unknown broadleaf crop (e.g., soybean)"". But we need a specific crop name. Could be ""soybean"". Let's assume it's soybean (common in agriculture). However the disease classes given are not typical for soybean (soybean rust, soybean cyst nematode, etc). But the list includes only those five diseases; none are soybean-specific. So maybe the crop is ""tomato"" (leaf shape similar to tomato). Tomato leaf is palmate with lobes; this leaf is more heart-shaped with a notch at base. Tomato leaf is more lobed. This leaf looks like a simple leaf with a pointed tip and a notch at base (like a bean leaf). Could be ""common bean"" (Phaseolus vulgaris). Common rust affects beans? Actually common rust (Uromyces spp.) affects many legumes, but the disease class ""common rust"" likely refers to cereals. Northern leaf blight is maize. Early blight is Alternaria spp. on many crops, but typical on tomato, potato, citrus. Late blight is Phytophthora infestans on potato/tomato. So maybe the crop is ""tomato"". Tomato leaf shape is more deeply lobed, but can be somewhat heart-shaped when young. The leaf in image is simple, entire margin, not lobed. So maybe it's ""potato""? Potato leaf is compound, not simple. So maybe it's ""cucumber""? Cucumber leaf is also broad, but shape is more triangular.
+
+Given limited info, safest is to say crop is ""unknown broadleaf crop (likely a legume)"". But we need a crop name. Could answer ""unknown"" but that may be not acceptable. The instruction: ""Identify the crop"". So we must give a crop name. Maybe we can infer from leaf shape: It resembles a ""bean leaf"". So crop name: ""common bean"". Let's go with ""common bean"". Disease: healthy (no symptoms). So most likely disease: healthy (i.e., no disease). But the disease class list includes ""healthy"". So we choose that.
+
+Visible symptoms: none; leaf appears intact, green, no lesions, no discoloration, no spots.
+
+Possible alternative causes: environmental stress, nutrient deficiency, pesticide damage, etc.
+
+Recommended immediate action: monitor field, keep records, scout for symptoms, maintain proper cultural practices.
+
+Preventive measures: crop rotation, resistant varieties, proper irrigation, sanitation.
+
+Another image needed? Probably not; the leaf looks healthy, but if suspect, a second image of the whole plant or more leaves would help.
+
+Confidence level: high (since no visible symptoms).
+
+Now format:
+
+Most likely disease: healthy
+
+Confidence level: high
+
+Then concise recommendation.
+
+Let's craft.
+</think>
+**Crop name:** common bean (Phaseolus vulgaris)  
+
+**Most likely disease:** healthy  
+
+**Visible symptoms:** No lesions, spots, discoloration, wilting, or deformation; leaf is uniformly green with normal venation and intact margin.  
+
+**Possible alternative causes:** Environmental stress (e.g., drought, nutrient imbalance), physical damage, pesticide burn, or early-stage infection not yet visible.  
+
+**Recommended immediate action:** Continue regular scouting; if any new symptoms appear, re‑sample and submit a fresh leaf for diagnosis.  
+
+**Preventive measures:** Use certified disease‑free seed, practice crop rotation, maintain optimal soil moisture and fertility, and apply fungicides only when disease pressure is confirmed.  
+
+**Whether another image is needed:** Not at this time, but obtain additional images of the whole plant and surrounding foliage if symptoms develop.  
+
+**Confidence level:** high (≈95%)",healthy,high,False,True,31.02837300300598,"So, let's look at the image. The leaf is green, healthy-looking, no visible spots or blight. The background is dark gray. So first, crop name: this looks like a tomato leaf maybe? Wait, the shape is heart-shaped with a notch at the base, which is common in tomato. But the key is disease. The leaf has no signs of disease—no spots, no blight, etc. So the disease class should be healthy. Let's check the options. The possible diseases are early blight, late blight, etc., but the leaf is healthy. So most likely disease is healthy. Then confidence: since there's no visible disease, high confidence. Crop name: tomato (since the leaf shape is typical of tomato). Wait, but maybe it's another crop. But the main thing is disease. Let's confirm. The leaf is intact, no damage. So disease is healthy.
+</think>
+Most likely disease: healthy
+Confidence level: high
+Crop name: tomato
+Visible symptoms: healthy leaf with no visible spots or blight
+Possible alternative causes: healthy
+Recommended immediate action: healthy
+Preventive measures: maintain good field hygiene
+Whether another image is needed: no
+IMPORTANT:
+Diagnosis: healthy
+Confidence level: high
+
+The leaf appears healthy with no visible disease symptoms. The background is dark gray, but the leaf itself shows no signs of blight, rust, or other diseases. The shape and condition match a healthy tomato leaf.
+
+Agricultural recommendation: The leaf is healthy, so continue standard care without treatment for disease.
+Preventive measures: monitor regularly for early signs of disease and maintain proper spacing for airflow.
+Health status: healthy
+Dataset source: PlantVillage
+
+Note: Since the leaf is healthy, the diagnosis is ""healthy"" and no disease treatment is needed.",Both correct

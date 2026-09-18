@@ -1,0 +1,296 @@
+from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(
+    0,
+    str(Path(__file__).resolve().parent.parent),
+)
+
+from agents.knowledge_agent import KnowledgeAgent
+
+
+def print_result(label: str, result) -> None:
+    print("\n" + "=" * 60)
+    print(label)
+    print("=" * 60)
+
+    print(f"Status:                 {result.status}")
+    print(f"Query:                  {result.query}")
+    print(f"Crop:                   {result.crop}")
+    print(f"Disease:                {result.disease}")
+    print(
+        f"Preference:             "
+        f"{result.recommendation_preference}"
+    )
+    print(
+        f"Hybrid candidates:     "
+        f"{result.hybrid_candidates}"
+    )
+    print(
+        f"Reranked candidates:   "
+        f"{result.reranked_candidates}"
+    )
+    print(
+        f"Accepted evidence:    "
+        f"{len(result.accepted_evidence)}"
+    )
+    print(
+        f"Rejected evidence:    "
+        f"{len(result.rejected_evidence)}"
+    )
+
+    for item in result.accepted_evidence:
+        print(
+            f"  ACCEPT "
+            f"score={item.reranker_score:.6f} "
+            f"preference="
+            f"{item.metadata.get('recommendation_preference')} "
+            f"chunk={item.chunk_id}"
+        )
+
+    for reason in result.reasons:
+        print(f"  reason: {reason}")
+
+
+def main() -> None:
+
+    print("\n=== CropGuard Knowledge Agent Test ===")
+
+    agent = KnowledgeAgent(
+        candidate_k=40,
+        rerank_top_k=8,
+        min_reranker_score=5.0,
+    )
+
+    print("\nAgent configuration:")
+    info = agent.info()
+
+    print(f"  agent: {info['agent']}")
+    print(f"  retrieval: {info['retrieval']}")
+    print(
+        f"  reranker: "
+        f"{info['reranker']['model']}"
+    )
+    print(
+        f"  inference_only: "
+        f"{info['inference_only']}"
+    )
+
+    # ------------------------------------------------------------
+    # TEST 1: Organic request
+    #
+    # Explicit Organic requests are restricted to Organic
+    # recommendation evidence before reranking.
+    #
+    # The Evidence Filter then enforces:
+    #   - crop/disease context
+    #   - Organic policy
+    #   - organic eligibility
+    #   - evidence type
+    #
+    # A lower reranker score must not by itself reject an
+    # explicitly policy-matched Organic record.
+    # ------------------------------------------------------------
+
+    organic = agent.retrieve(
+        query=(
+            "What organic practices can help manage "
+            "northern leaf blight in corn?"
+        ),
+        crop="Corn",
+        disease="northern_leaf_blight",
+        evidence_type="treatment",
+        recommendation_preference="Organic",
+    )
+
+    print_result(
+        "TEST 1: ORGANIC EVIDENCE",
+        organic,
+    )
+
+    assert organic.status == "SUFFICIENT"
+    assert len(organic.accepted_evidence) >= 1
+
+    for item in organic.accepted_evidence:
+        assert (
+            item.metadata.get(
+                "recommendation_preference"
+            )
+            == "Organic"
+        )
+        assert (
+            item.metadata.get("organic_eligible")
+            is True
+        )
+        assert (
+            item.metadata.get("crop")
+            == "Corn"
+        )
+
+    print("\nOrganic policy: PASS")
+    print("Organic evidence retrieval: PASS")
+    print("Organic eligibility: PASS")
+
+    # ------------------------------------------------------------
+    # TEST 2: General request
+    #
+    # General evidence has strong relevance and should be
+    # available for a General recommendation.
+    # ------------------------------------------------------------
+
+    general = agent.retrieve(
+        query=(
+            "How can northern leaf blight "
+            "in corn be managed?"
+        ),
+        crop="Corn",
+        disease="northern_leaf_blight",
+        evidence_type="treatment",
+        recommendation_preference="General",
+    )
+
+    print_result(
+        "TEST 2: GENERAL EVIDENCE",
+        general,
+    )
+
+    assert general.status == "SUFFICIENT"
+    assert len(general.accepted_evidence) >= 1
+
+    for item in general.accepted_evidence:
+        assert item.metadata.get("crop") == "Corn"
+
+        # Preserve original KB provenance while accepting
+        # equivalent application-level disease labels.
+        disease = str(
+            item.metadata.get("disease", "")
+        ).strip().lower()
+
+        assert disease in {
+            "northern_leaf_blight",
+            "northern corn leaf blight",
+            "northern leaf blight",
+            "nclb",
+        }
+
+    print("\nGeneral evidence: PASS")
+    print("Crop/disease traceability: PASS")
+
+    # ------------------------------------------------------------
+    # TEST 3: IPM request
+    #
+    # Explicit IPM requests are restricted to IPM recommendation
+    # evidence before reranking.
+    # ------------------------------------------------------------
+
+    ipm = agent.retrieve(
+        query=(
+            "How can northern leaf blight "
+            "in corn be managed using IPM?"
+        ),
+        crop="Corn",
+        disease="northern_leaf_blight",
+        evidence_type="treatment",
+        recommendation_preference="IPM",
+    )
+
+    print_result(
+        "TEST 3: IPM EVIDENCE",
+        ipm,
+    )
+
+    assert ipm.status == "SUFFICIENT"
+    assert len(ipm.accepted_evidence) >= 1
+
+    for item in ipm.accepted_evidence:
+        assert (
+            item.metadata.get(
+                "recommendation_preference"
+            )
+            == "IPM"
+        )
+        assert (
+            item.metadata.get("ipm_eligible")
+            is True
+        )
+        assert (
+            item.metadata.get("crop")
+            == "Corn"
+        )
+
+    print("\nIPM policy: PASS")
+    print("IPM evidence retrieval: PASS")
+    print("IPM eligibility: PASS")
+
+    # ------------------------------------------------------------
+    # TEST 4: True safe abstention
+    #
+    # Cherry powdery mildew has no IPM-specific record in the
+    # current controlled knowledge set. General/Organic evidence
+    # must not be substituted for an explicit IPM request.
+    # ------------------------------------------------------------
+
+    abstention = agent.retrieve(
+        query=(
+            "What IPM practices can help manage "
+            "powdery mildew in cherry?"
+        ),
+        crop="Cherry",
+        disease="powdery_mildew",
+        evidence_type="treatment",
+        recommendation_preference="IPM",
+    )
+
+    print_result(
+        "TEST 4: TRUE SAFE ABSTENTION",
+        abstention,
+    )
+
+    assert abstention.status == "INSUFFICIENT"
+    assert len(abstention.accepted_evidence) == 0
+
+    for item in abstention.accepted_evidence:
+        assert (
+            item.metadata.get(
+                "recommendation_preference"
+            )
+            == "IPM"
+        )
+
+    print("\nIPM safe abstention: PASS")
+    print(
+        "General/Organic evidence cannot satisfy IPM: PASS"
+    )
+
+    # ------------------------------------------------------------
+    # TEST 3: Accepted evidence must be traceable
+    # ------------------------------------------------------------
+
+    trace = general.traceability()
+
+    assert len(trace) == len(
+        general.accepted_evidence
+    )
+
+    for item in trace:
+        assert item["chunk_id"]
+        assert item["knowledge_id"]
+        assert item["crop"]
+        assert item["disease"]
+        assert item["reranker_score"] is not None
+
+    print("Evidence traceability: PASS")
+
+    # ------------------------------------------------------------
+    # FINAL
+    # ------------------------------------------------------------
+
+    print(
+        "\nKNOWLEDGE AGENT INTEGRATION TEST: PASS"
+    )
+
+
+if __name__ == "__main__":
+    main()
